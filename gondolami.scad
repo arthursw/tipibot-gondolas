@@ -9,11 +9,11 @@ include <BOSL2/gears.scad>
 thickness = 3;
 
 gondola_length = 170;
-gondola_outer_diameter = 200;
+gondola_outer_diameter = 200; // this is the total arc height ; the rail is rail_width bellow, the inner radius is gondola_outer_diameter - arc_width
 arc_width = 20;
 rail_width = 5;
-notch = 7.5;
-gondola_height = 90;
+notch = 10;
+gondola_height = 93; // bottom to body top
 gondola_width = 70;
 
 holder_margin = thickness;
@@ -25,66 +25,80 @@ holder_height = 50;
 
 wheel_diameter = 22;
 
-module h_notch(od=200, notch=10) {
-    h_notch_position = [od/2-notch/2, thickness+thickness/2, 0];
+m3_nut_height = 2.4;
+m3_nut_S = 5.5;
+m3_screw_head_diameter = 5.5;
+
+module h_notch(od=200, arc_width, notch=10, screw=false) {
+    h_notch_position = [od/2-arc_width/2, thickness+thickness/2, 0];
     h_notch_size = [notch, thickness, 2*thickness];
-    translate(h_notch_position)
+    translate(h_notch_position) 
+    if(screw) {
+        cyl(r=m3_screw_head_diameter/2, l=2*thickness, $fs=1);
+    } else {
         cuboid(h_notch_size, anchor=BOTTOM);
+    }
 }
 
-module main_arc_l(od=200, arc_width=20, notch=7.5, width=70, height=87, marble_nut=0, marble_height=15, side_marbles_y=0, side_marbles_x=0) {
+module v_notch(od=200, arc_width, width, height, notch=10, screw=false) {
+    v_notch_position = [width/2, height-arc_width/2, 0];
+    v_notch_size = [thickness, notch, 2*thickness];
+    translate(v_notch_position)
+    if(screw) {
+        cyl(r=m3_screw_head_diameter/2, l=2*thickness, $fs=1);
+    } else {
+        cuboid(v_notch_size, anchor=BOTTOM);
+    }
+}
+
+module main_arc_l(od=200, id=180, arc_width=20, notch=notch, width=gondola_width, height=gondola_height, marble_nut=0, marble_y=arc_width/2, side_marbles_y=0, side_marbles_x=0, screw=false) {
     difference() {
         back_half(y=0)
-        tube(h=thickness, od=od, id=od-2*arc_width);
-        
+        tube(h=thickness, od=od, id=id);
+
         // horizontal notches
-        h_notch(od, notch);
+        h_notch(od, arc_width, notch, screw);
         
         xflip()
-            h_notch(od, notch);
+            h_notch(od, arc_width, notch, screw);
         
         // vertical notches
-        v_notch_position = [width/2, height, 0];
-        v_notch_size = [thickness, notch, 2*thickness];
-        translate(v_notch_position)
-            cuboid(v_notch_size, anchor=BOTTOM);
-        
-        xflip()
-        translate(v_notch_position)
-            cuboid(v_notch_size, anchor=BOTTOM);
+        v_notch(od, arc_width, width, height, notch, screw);
 
-        // 
+        xflip()
+            v_notch(od, arc_width, width, height, notch, screw);
+
         if(marble_nut > 0) {
             e = marble_nut*2/sqrt(3);
-            back(od/2-marble_height/2)
+            back(marble_y)
             cyl(r=e/2, l=2*thickness, $fn=6);
             
             if(side_marbles_y != 0) {
                 back(side_marbles_y) {
-                    left(od/2-marble_height/2-side_marbles_x)
+                    left(side_marbles_x)
                     cyl(r=e/2, l=2*thickness, $fn=6);
                     
-                    right(od/2-marble_height/2-side_marbles_x)
+                    right(side_marbles_x)
                     cyl(r=e/2, l=2*thickness, $fn=6);
                 }
             }
         }
     }
 }
+// main_arc_l(screw=true);
 
-module main_arc(od=200, arc_width=arc_width, notch=7.5, width=70, height=90, marble_nut=0, side_marbles_y=0, side_marbles_x=0) {
-    render(){
-        
+module main_arc(od=gondola_outer_diameter, arc_width=arc_width, notch=notch, width=gondola_width, height=gondola_height, marble_nut=0, side_marbles_y=0, side_marbles_x=0) {
+    // render(){
         // Main / thick arc
-        main_arc_l(od, arc_width, notch, width, height+notch/2, marble_nut, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x);
+        main_arc_l(od, od-2*arc_width, arc_width, notch, width, height, marble_nut, marble_y=od/2-arc_width/2, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x);
         up(thickness)
         
         // Thin arc
-        main_arc_l(od-rail_width, arc_width-rail_width, 2*notch, width, height, marble_nut, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x);
-    }
+        main_arc_l(od-rail_width,  od-2*arc_width+rail_width, arc_width, notch, width, height, marble_nut, marble_y=od/2-arc_width/2, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, screw=true);
+    // }
 }
 
-main_arc();
+// main_arc(marble_nut=13);
 
 module long_link(length=gondola_length) {
 
@@ -106,6 +120,35 @@ module long_link(length=gondola_length) {
 
 }
 
+module long_link2_body(s=100, anchor=CENTER, spin=0, orient=UP, arc_width=arc_width, length=gondola_length, notch=notch) {
+    
+    attachable(anchor,spin,orient, size=[arc_width, length, thickness]) {
+        screw_length = 20;
+        cuboid([arc_width, length, thickness], anchor=BOTTOM) {            
+            // male notches
+            attach([FRONT, BACK], overlap=0) cuboid([notch, thickness, thickness], anchor=BOTTOM, $tags="notch");
+        }
+        children();
+    }
+}
+// long_link2_body(100) show_anchors(30);
+
+module long_link2(length=gondola_length, notch=notch) {
+    
+    screw_length = 20;
+
+    HSL(h=120,s=0.5,l=0.5)
+    diff("screw")
+    long_link2_body(arc_width=arc_width, length=length, notch=notch) {
+        // screw holes
+        attach([FRONT, BACK], overlap=0) up(thickness) cuboid([thickness, 2*thickness, screw_length], anchor=TOP, $tags="screw"){
+            cuboid([m3_nut_S, 2*thickness, m3_nut_height]);
+        };
+    };
+}
+
+// long_link2();
+
 module long_link_notch(length, width) {
     h_notch_size = [width-notch, thickness, 2*thickness];
     fwd(length/2-thickness/2-thickness)
@@ -116,9 +159,6 @@ module long_link_notch(length, width) {
     right(width/2)
         cuboid(h_notch_size, anchor=BOTTOM);
 }
-
-m3_nut_height = 2.4;
-m3_nut_S = 5.5;
 
 module long_link_screw_notch(length, width, screw_notch=20, screw_pos=40) {
     fwd(screw_pos) {
@@ -196,7 +236,7 @@ module holder_end(width=holder_width, height=holder_height, length=170, prism_wi
 }
 
 module holder(length=holder_length, height=holder_height) {
-    render(){
+    // render(){
         fwd(2*thickness + holder_margin)
         holder_end(height=height);
 
@@ -220,7 +260,7 @@ module holder(length=holder_length, height=holder_height) {
         up(2*thickness)
         yrot(180)
         long_link(length=length); 
-    }
+    // }
 }
 
 module wheel1(thickness=7.5, diameter=wheel_diameter, rail_depth=4, rail_thickness=3.279) {
@@ -438,35 +478,37 @@ module three_d() {
     xrot(90)
         main_arc(marble_nut=13);
 
-    render(){
+    // render(){
         // H links
         up(thickness)
         right(gondola_outer_diameter/2-arc_width/2)
         xflip()
         fwd(gondola_length/2)
-        long_link();
+        long_link2(gondola_length-4*thickness);
 
         xflip()
         up(thickness)
         right(gondola_outer_diameter/2-arc_width/2)
         xflip()
         fwd(gondola_length/2)
-        long_link();
+        long_link2(gondola_length-4*thickness);
 
         // V links
-        up(gondola_height)
+        up(gondola_height-arc_width/2)
         right(gondola_width/2-thickness/2)
         yrot(90)
         fwd(gondola_length/2)
-        long_link_top(gondola_length, 1.5*arc_width, 40);
+        // long_link_top(gondola_length, 1.5*arc_width, 40);
+        long_link2(gondola_length-4*thickness);
 
         xflip()
-        up(gondola_height)
+        up(gondola_height-arc_width/2)
         right(gondola_width/2-thickness/2)
         yrot(90)
         fwd(gondola_length/2)
-        long_link_top(gondola_length, 1.5*arc_width, 40);
-    }
+        // long_link_top(gondola_length, 1.5*arc_width, 40);
+        long_link2(gondola_length-4*thickness);
+    // }
 
     // up(holder_height)
     // yrot(180)
@@ -799,7 +841,7 @@ module marble() {
 // marble();
 
 
-// fwd(-gondola_length/2) three_d();
+fwd(-gondola_length/2) three_d();
 
 
 // Todo
