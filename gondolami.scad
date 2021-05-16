@@ -8,6 +8,13 @@ include <BOSL2/gears.scad>
 // All dimensions are from outer ends (i.e. width = from outer left to outer right)
 // except when specified differently
 
+// Hexagon: https://fr.wikipedia.org/wiki/Hexagone
+// h = side * sqrt(3) / 2 = small radius
+// r = side = large radius
+
+function hexagon_h_to_r(h) = h * 2 / sqrt(3);
+function hexagon_r_to_h(r) = r * sqrt(3) / 2;
+
 thickness = 3;
 
 gondola_length = 150;
@@ -55,12 +62,28 @@ link_length = gondola_length - 4 * thickness;
 side_comb_pos = link_length / 2 - 7 * thickness;
 vlink_height = 15;
 
+point88_length = 166;
+point88_diameter = 8;
+point88_h = hexagon_r_to_h(point88_diameter / 2);
+
+pencil_h = 7.6;
+pencil_diameter = 2 * hexagon_h_to_r(pencil_h);
+pencil_length = 80;
+
+// hlinks_y = hexagon_r_to_h(pencil_diameter/2); // = point88 height / 2
+hlinks_y = 2*thickness;
+
+arc_bottom_height = 10;
+
+magnet_blocker_length = 15;
+
 module h_notch(od=200, arc_width, screw=false) {
-    h_notch_position = [od/2-arc_width/2, thickness+thickness/2, 0];
+    h_notch_position = [od/2-arc_width/2, hlinks_y+thickness/2, 0];
     h_notch_size = [arc_notch, thickness, 2*thickness];
     translate(h_notch_position) 
     if(screw) {
-        cyl(r=m3_screw_head_diameter/2, l=2*thickness, $fs=1);
+        // cyl(r=m3_screw_head_diameter/2, l=2*thickness, $fs=1);
+        cyl(r=m3_diameter/2, l=2*thickness, $fs=1);
     } else {
         cuboid(h_notch_size, anchor=BOTTOM);
     }
@@ -71,16 +94,23 @@ module v_notch(od=200, width, height, screw=false) {
     v_notch_size = [thickness, arc_notch, 2*thickness];
     translate(v_notch_position)
     if(screw) {
-        cyl(r=m3_screw_head_diameter/2, l=2*thickness, $fs=1);
+        // cyl(r=m3_screw_head_diameter/2, l=2*thickness, $fs=1);
+        cyl(r=m3_diameter/2, l=2*thickness, $fs=1);
     } else {
         cuboid(v_notch_size, anchor=BOTTOM);
     }
 }
 
-module main_arc_l(od=200, id=180, arc_width=20, width=gondola_width, height=gondola_height, marble_nut=0, marble_y=arc_width/2, side_marbles_y=0, side_marbles_x=0, screw=false) {
+module main_arc_l(od=200, id=180, arc_width=20, width=gondola_width, height=gondola_height, marble_nut=0, marble_y=arc_width/2, side_marbles_y=0, side_marbles_x=0, side_marbles_angle=0, screw=false, pencil_holes=false, screw_holes=true) {
+    arc_middle_radius = (od + id) / 4;
     difference() {
-        back_half(y=0)
-        tube(h=thickness, od=od, id=id, $fa=1);
+        union() {
+            back_half(y=0)
+            tube(h=thickness, od=od, id=id, $fa=1);
+            fwd(arc_bottom_height)
+            mirror_copy(LEFT, arc_middle_radius + arc_width / 2)
+            cube([arc_width, arc_bottom_height, thickness]);
+        }
 
         // horizontal notches
         h_notch(od, arc_width, screw);
@@ -92,7 +122,8 @@ module main_arc_l(od=200, id=180, arc_width=20, width=gondola_width, height=gond
 
         xflip()
             v_notch(od, width, height, screw);
-
+        
+        // marbles
         if(marble_nut > 0) {
             e = marble_nut*2/sqrt(3);
             back(marble_y)
@@ -100,14 +131,25 @@ module main_arc_l(od=200, id=180, arc_width=20, width=gondola_width, height=gond
             
             if(side_marbles_y != 0) {
                 back(side_marbles_y) {
-                    left(side_marbles_x)
-                    cyl(r=e/2, l=2*thickness, $fn=6);
-                    
-                    right(side_marbles_x)
+                    mirror_copy(LEFT, side_marbles_x)
+                    zrot(side_marbles_angle)
                     cyl(r=e/2, l=2*thickness, $fn=6);
                 }
             }
         }
+
+        // pencil hole
+        if(pencil_holes) {
+            mirror_copy(LEFT, arc_middle_radius)
+            cyl(r=pencil_diameter/2, l=2*thickness, $fn=6);
+        }
+
+        // screw hole
+        // if(screw_holes) {
+        //     fwd(arc_bottom_height-thickness)
+        //     mirror_copy(LEFT, arc_middle_radius)
+        //     #cyl(r=m3_diameter/2, l=2*thickness, $fn=10);
+        // }
     }
 }
 // main_arc_l(screw=true);
@@ -125,11 +167,11 @@ module target() {
 
 // target();
 
-module main_arc(od=gondola_outer_diameter, arc_width=arc_width, width=gondola_width, height=gondola_height, marble_nut=0, side_marbles_y=0, side_marbles_x=0, targets=false) {
+module main_arc(od=gondola_outer_diameter, arc_width=arc_width, width=gondola_width, height=gondola_height, marble_nut=0, side_marbles_y=0, side_marbles_x=0, side_marbles_angle=0, targets=false, pencil_holes=false) {
     // render(){
         // Main / thick arc
         union() {
-            main_arc_l(od, od-2*arc_width, arc_width, width, height, marble_nut, marble_y=od/2-arc_width/2, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x);
+            main_arc_l(od, od-2*arc_width, arc_width, width, height, marble_nut, marble_y=od/2-arc_width/2, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, side_marbles_angle=side_marbles_angle, pencil_holes=pencil_holes);
             if(targets) {
                 // top target
                 back(gondola_outer_diameter/2)
@@ -145,7 +187,7 @@ module main_arc(od=gondola_outer_diameter, arc_width=arc_width, width=gondola_wi
         // Thin arc
         color( rands(0,1,3), alpha=1 )
         up(thickness+0.01)
-        main_arc_l(od-rail_depth,  od-2*arc_width+rail_depth, arc_width-rail_depth, width, height, marble_nut, marble_y=od/2-arc_width/2, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, screw=true);
+        main_arc_l(od-rail_depth,  od-2*arc_width+rail_depth, arc_width-rail_depth, width, height, marble_nut, marble_y=od/2-arc_width/2, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, side_marbles_angle=side_marbles_angle, screw=true, pencil_holes=pencil_holes);
     // }
 }
 
@@ -198,7 +240,23 @@ module hlink() {
         // Ring body
         union() {
             long_link2();
-            cuboid([hlink_width, hlink_weight_length + 2 * hlink_margin, thickness], anchor=BOTTOM, rounding=(hlink_width)/2, edges=[FRONT+LEFT,FRONT+RIGHT, BACK+LEFT,BACK+RIGHT]);
+            cuboid([hlink_width, hlink_weight_length + 2 * hlink_margin, thickness], anchor=BOTTOM, rounding=(hlink_width)/2, edges=[FRONT+LEFT, BACK+LEFT,BACK+RIGHT]);
+
+            // front cube for pencil_holder
+            front_cube_length = (link_length - hlink_weight_length) / 2;
+            front_cube_width = (hlink_width - arc_width) / 2;
+            fwd(link_length/2)
+            right(arc_width/2)
+            cube([front_cube_width, front_cube_length, thickness]);
+
+            // front comb
+            comb_length = front_cube_length+flask_diameter/2;
+            comb_width = notch;
+            up(thickness/2)
+            fwd(link_length / 2 - comb_length / 2)
+            right(arc_width / 2 + comb_width + front_cube_width / 2)
+            xflip()
+            comb(comb_length, comb_width / 2);
         }
 
         // Interior hole
@@ -209,6 +267,7 @@ module hlink() {
         cuboid([m3_diameter, hlink_weight_length-flask_diameter+m3_diameter, 2*thickness], anchor=BOTTOM, rounding=m3_diameter/2, edges=[FRONT+LEFT,FRONT+RIGHT, BACK+LEFT,BACK+RIGHT],$fn=10);
     }
 }
+// hlink();
 
 module hlink_cap() {
     difference() {
@@ -225,33 +284,6 @@ module hlink_ensemble() {
     up(thickness)
     hlink_cap();
 }
-
-module holder_bridge(width=pen_holder_width, height=holder_height, length=170, prism_width=50, prism_height=30, prism_base=0, notch_zpos=3*thickness, center_notch=-1, side_notches=-1, leg_height=10) {
-    up(height/2)
-    xrot(90)
-    diff("remove")
-        cuboid([width, height, thickness], anchor=BOTTOM){
-            // center notch
-            if(center_notch > 0) {
-                position(FRONT) cuboid([center_notch, thickness, 2*thickness], anchor=FRONT, $tags="remove");
-            }
-            if(side_notches > 0) {
-                fwd(height/2-thickness/2-notch_zpos) {
-                    attach(RIGHT, overlap=0) cuboid([thickness, 2*thickness, side_notches], anchor=TOP, $tags="remove");
-                    attach(LEFT, overlap=0) cuboid([thickness, 2*thickness, side_notches], anchor=TOP, $tags="remove");
-                }
-            }
-            // Prism
-            fwd(-height/2+leg_height)
-            xrot(90)
-            prismoid(size1=[prism_width,2*thickness], size2=[prism_base,2*thickness], h=prism_height, $tags="remove");
-
-            // Legs
-            fwd(-height/2+leg_height)
-            cuboid([prism_width, leg_height, 2*thickness], anchor=FRONT, $tags="remove");
-        }
-}
-// holder_bridge();
 
 rail_thickness = 3.279;
 wheel_rail_depth = 2;
@@ -291,6 +323,10 @@ module double_caster_side(assembly_notch=false) {
 
         // Axe holes
         cyl(l=thickness, r=axe_diameter/2);
+
+        // Screw hole
+        fwd(interval_between_wheels /2)
+        cyl(l=2*thickness, r=m3_diameter/2, $fn=15);
 
         fwd(interval_between_wheels)
         cyl(l=thickness, r=axe_diameter/2);
@@ -531,7 +567,7 @@ module vlink_with_comb(length=link_length, arc_width=arc_width) {
 // Comb
 module comb(length, notch, width = -1) {
     width = width < 0 ? 2 * notch : width;
-    echo(width);
+
     n_notches = floor((length / thickness) / 2);
     notches_length = n_notches * 2 * thickness;
     difference() {
@@ -548,25 +584,71 @@ module comb(length, notch, width = -1) {
 blocker_margin = 5;
 sliding_magnet_width = 20;
 
-module pen_holder(length=body_length-magnet_blocker_length-blocker_margin, height=50, bridge_pos=30, prism_width=46, prism_base=20, prism_height=16, leg_height=32) {
+module pen_holder_bridge(width=pen_holder_width, height=holder_height, length=170, prism_width=50, prism_height=30, prism_base=0, comb_notch_z=3*thickness, center_notch=sliding_magnet_width, side_notches=-1, leg_height=10, elastic_notch_x=-1, elastic_notch_size=-1, clamp_comb_notch=-1) {
+    elastic_notch_size = elastic_notch_size < 0 ? 3 : elastic_notch_size;
+    elastic_notch_x = elastic_notch_x < 0 ? width / 2 - 12 : elastic_notch_x;
+    up(height/2)
+    xrot(90)
+    diff("remove")
+        cuboid([width, height, thickness], anchor=BOTTOM){
+            // Center notch
+            if(center_notch > 0) {
+                position(FRONT) cuboid([center_notch, thickness, 2*thickness], anchor=FRONT, $tags="remove");
+            }
+
+            // Clamp comb notch
+            if(clamp_comb_notch > 0) {
+                back(thickness)
+                position(FRONT) cuboid([thickness, clamp_comb_notch, 2*thickness], anchor=FRONT, $tags="remove");
+            }
+
+            // Elastic notches
+            fwd(height/2-elastic_notch_size/2) {
+                mirror_copy(LEFT, elastic_notch_x)
+                cuboid([elastic_notch_size, elastic_notch_size, 2*thickness], $tags="remove");
+            }
+
+            // Side notches
+            if(side_notches > 0) {
+                fwd(height/2-thickness/2-comb_notch_z) {
+                    attach(RIGHT, overlap=0) cuboid([thickness, 2*thickness, side_notches], anchor=TOP, $tags="remove");
+                    attach(LEFT, overlap=0) cuboid([thickness, 2*thickness, side_notches], anchor=TOP, $tags="remove");
+                }
+            }
+            // Prism
+            fwd(-height/2+leg_height)
+            xrot(90)
+            prismoid(size1=[prism_width,2*thickness], size2=[prism_base,2*thickness], h=prism_height, $tags="remove");
+
+            // Legs
+            fwd(-height/2+leg_height)
+            cuboid([prism_width, leg_height, 2*thickness], anchor=FRONT, $tags="remove");
+        }
+}
+// pen_holder_bridge(side_notches=8, clamp_comb_notch=4);
+pen_holder_length = body_length - magnet_blocker_length - blocker_margin;
+
+module pen_holder(width = pen_holder_width, height=50, bridge_pos=30, prism_width=46, prism_base=20, prism_height=16, leg_height=32, comb_notch_z = 3 * thickness, comb_notch_size = 8, elastic_notch_x=-1, clamp_comb_notch=-1) {
+    
+    length = pen_holder_length;
+
     // render() {
-        holder_notch = 8;
-        notch_zpos = 3 * thickness;
-        width = pen_holder_width;
         // sliding magnets
         fwd(magnet_blocker_length/2+blocker_margin/2)
         up(height-thickness)
         sliding_magnet(length, sliding_magnet_width, n_magnets);
         
+        // Holder bridge
         mirror_copy(FRONT, length/2-bridge_pos)
         up(height)
         zflip()
         ycopies(10, 2)
-        holder_bridge(width=width, height=height, center_notch=sliding_magnet_width, side_notches=holder_notch, notch_zpos=notch_zpos, prism_width=prism_width, prism_base=prism_base, prism_height=prism_height, leg_height=leg_height);
-
-        mirror_copy(LEFT, -width/2+holder_notch)
-        up(height-notch_zpos-thickness/2)
-        comb(length, holder_notch);
+        pen_holder_bridge(width=width, height=height, side_notches=comb_notch_size, comb_notch_z=comb_notch_z, prism_width=prism_width, prism_base=prism_base, prism_height=prism_height, leg_height=leg_height, elastic_notch_x=elastic_notch_x, clamp_comb_notch=clamp_comb_notch);
+        
+        // Comb
+        mirror_copy(LEFT, -width/2+comb_notch_size)
+        up(height-comb_notch_z-thickness/2)
+        comb(length, comb_notch_size);
     // }
 }
 
@@ -619,6 +701,44 @@ module squeezer() {
     rotate_extrude($fn=30)
     polygon(points=points);
 }
+
+module point88() {
+    //   Stabilo point 88
+    color( rands(0,1,3), alpha=1 )
+    xrot(90)
+    cyl(l=point88_length, r=point88_diameter/2, $fn=6);
+}
+
+module pencil() {
+    color( rands(0,1,3), alpha=1 )
+    xrot(90)
+    cyl(l=pencil_length, r=pencil_diameter/2, $fn=6);
+}
+
+module pencil_holder() { 
+    pencil_holder_margin = 2 * thickness;
+    pencil_holder_length = hlink_width + pencil_holder_margin;
+
+    down(arc_bottom_height)
+    left(hlink_width/2)
+    xrot(90) {
+    difference() {
+        cube([pencil_holder_length, arc_bottom_height + hlinks_y + thickness + pencil_holder_margin, thickness]);
+
+        // top notch
+        left(pencil_holder_margin)
+        back(arc_bottom_height + hlinks_y)
+        cube([pencil_holder_length, thickness, 2*thickness]);
+
+        // pencil hole
+        translate([(hlink_width)/2, arc_bottom_height, 0])
+        cyl(l=pencil_length, r=pencil_diameter/2, $fn=6);
+    }
+    }
+
+}
+
+// pencil_holder();
 
 // color( rands(0,1,3), alpha=1 )
 // fwd(gondola_length/2+front_arc_out_to_wall-squeezer_length/2)
@@ -828,7 +948,6 @@ module sliding_magnet(length, width, n_magnets) {
     }
 }
 
-magnet_blocker_length = 15;
 module magnet_blocker() {
     diff("remove") {
         cuboid([body_width, magnet_blocker_length, thickness], anchor=BOTTOM);
@@ -904,57 +1023,136 @@ module notched_wedge() {
 
 // notched_wedge();
 
-module three_d_structure() {
+module three_d_structure(arcs=true, hlinks=true, vlinks=true, flasks=true, top_marble=true, side_marbles=true, pencil_holders=true, pencils=true) {
 
-    fwd(-gondola_length/2+2*thickness)
-    zrot(180)
-    xrot(90)
-    main_arc();
+    side_marbles_y = 20;
+    side_marbles_x = gondola_outer_diameter / 2 - arc_width / 2 - 2.25;
+    side_marbles_angle = 17;
 
-    fwd(gondola_length/2-2*thickness)
-    xrot(90)
-    main_arc(marble_nut=13, targets=true);
+    if(arcs) {
+
+        fwd(-gondola_length/2+2*thickness)
+        zrot(180)
+        xrot(90)
+        main_arc();
+
+        fwd(gondola_length/2-2*thickness)
+        xrot(90)
+        if(side_marbles) {
+            main_arc(marble_nut=13, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, side_marbles_angle=side_marbles_angle, pencil_holes=true);
+        } else {
+            main_arc(marble_nut=13, pencil_holes=true);
+        }
+    }
+
+    
+    fwd(gondola_length/2-2*thickness) {
+        if(top_marble) {
+            up(gondola_outer_diameter/2-arc_width/2) xrot(90) marble();
+        }
+        
+        if(side_marbles) {
+            // up(side_marbles_y)
+            // mirror_copy(LEFT, side_marbles_x)
+            // xrot(90) marble();
+        }
+    }
 
     // H links
-    mirror_copy(LEFT, gondola_outer_diameter/2-arc_width/2)
-    up(thickness)
-    hlink_ensemble();
+    if(hlinks) {
+        mirror_copy(LEFT, gondola_outer_diameter/2-arc_width/2)
+        up(hlinks_y)
+        hlink_ensemble();
+    }
+
+    if(pencil_holders) {
+        fwd(33.5)
+        mirror_copy(LEFT, gondola_outer_diameter/2-arc_width/2)
+        pencil_holder();
+    }
 
     // V links
-    mirror_copy(LEFT, gondola_width/2)
-    up(gondola_height-arc_width/2)
-    yrot(90)
-    vlink_with_comb();
+    if(vlinks) {
+        mirror_copy(LEFT, gondola_width/2)
+        up(gondola_height-arc_width/2)
+        yrot(90)
+        vlink_with_comb();
+    }
 
-    left(gondola_outer_diameter/2-arc_width/2)
-    flask2();
+    if(flasks) {
+        mirror_copy(LEFT, gondola_outer_diameter/2-arc_width/2)
+        flask2();
+    }
+
+    if(pencils) {
+        mirror_copy(LEFT, gondola_outer_diameter / 2 - arc_width / 2)
+        fwd(gondola_length/2+front_arc_out_to_wall-pencil_length/2)
+        pencil();
+    }
 }
-
-// three_d_structure();
 
 
 squeezer_diameter = 45;
 
-module three_d_inside() {
+module clamp_comb(length, notch, clamp_comb_space_height=1, clamp_comb_space_length=51, center_notch=false, side_notches=true) {
+    difference() {
+        comb(length, notch);
 
-    // squeezer holder
-    fwd(pen_position)
-    squeezer_ensemble();
+        // Side notches
+        if(side_notches) {
+            right(notch-clamp_comb_space_height/2)
+            mirror_copy(FRONT, length / 2 - clamp_comb_space_length / 2)
+            cuboid([clamp_comb_space_height, clamp_comb_space_length, 2 * thickness]);
+        }
+
+        if(center_notch) {
+            right(notch-clamp_comb_space_height/2)
+            cuboid([clamp_comb_space_height, clamp_comb_space_length, 2 * thickness]);
+        }
+    }
+}
+
+// clamp_comb(100, 10);
+
+module point88_ensemble() {
+
+    ground_to_pen_bottom = 5;
+    clamp_comb_notch = 2;
+    point88_holder_height = 25;
+    ground_to_pen_center = point88_h+ground_to_pen_bottom;
 
     // Point 88 holder
-    // down(4)
-    // pen_holder(width=30, sliding_magnet_width=20, height=20, end_pos=30, prism_width=18, prism_base=0, prism_height=10, leg_height=0);
+    down(ground_to_pen_center)
+    pen_holder(width=40, height=point88_holder_height, prism_width=point88_diameter, prism_base=point88_diameter / 2, prism_height=point88_h, leg_height=point88_h+ground_to_pen_bottom, comb_notch_z=12, comb_notch_size=5, elastic_notch_x=15, clamp_comb_notch=clamp_comb_notch);
+
+    // Clamp comb
+    // up(point88_holder_height-ground_to_pen_bottom-clamp_comb_notch-thickness)
+    up(point88_holder_height-ground_to_pen_center-2*clamp_comb_notch-thickness)
+    yrot(-90)
+    clamp_comb(pen_holder_length, 2*clamp_comb_notch, clamp_comb_space_length=25, center_notch=true, side_notches=true);
+
+    // Point 88
+    color( rands(0,1,3), alpha=1 )
+    // fwd(gondola_length/2+front_arc_out_to_wall-squeezer_length)
+    fwd(body_length/2-point88_length/2+pen_front_offset)
+    point88();
+}
+
+// point88_ensemble();
+
+module three_d_inside(type="point88") {
+
+    // squeezer holder
+    fwd(pen_position) 
+    if(type == "point88") {
+        point88_ensemble();
+    } else if(type == "squeezer") {
+        squeezer_ensemble();
+    } else {
+        point88_ensemble();
+    }
 
     // Pen
-    
-    // //   Stabilo point 88
-    stabilo_point_88_length = 166;
-    stabilo_point_88_diameter = 8;
-    color( rands(0,1,3), alpha=1 )
-    fwd(gondola_length/2+front_arc_out_to_wall-stabilo_point_88_length/2)
-    xrot(90)
-    cyl(l=stabilo_point_88_length, r=stabilo_point_88_diameter/2, $fn=6);
-
     up(gondola_height-vlink_height-arc_width-8*thickness)
     body();
 }
@@ -1072,27 +1270,23 @@ module three_d() {
     right(gondola_outer_diameter/2-arc_width-wheel_diameter/2+wheel_rail_depth)
     zrot(90)
     double_caster_wing();
-
-    fwd(gondola_length/2-2*thickness) up(gondola_outer_diameter/2-arc_width/2) xrot(90) marble();
 }
 
 // marble();
 
 
 // Todo
-// - targets to see home position
 
-// - switch between pos
-// - 3 marbles
 // - switch between squeezer and point88
-// - compute body heights with different pens!
+// - verify pen holder heights / compute body heights with different pens!
 // - add circle precision (for example double caster axe holes)
 // - 2D view
 // - shopping list
 // - prepare tests : axe_diameter, notches, etc.
+// - cut some spacer rings for the marble?
 
-// - sliders with other magners (circular)?
-// - screws for sliding magnet and rack? = cut many instances and glue
+// - sliders with other magnets (circular)?
+
 
 // V2
 // - add solenoid
@@ -1111,4 +1305,7 @@ module three_d() {
 // - multiple pens on the gondola
 
 // #cuboid([gondola_width, gondola_length, gondola_height], anchor=BOTTOM);
-three_d();
+// three_d_structure(vlinks=false, side_marbles=true, top_marble=false);
+// body();
+three_d_inside();
+// three_d();
