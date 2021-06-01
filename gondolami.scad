@@ -1718,23 +1718,37 @@ module tests() {
 // tests();
 
 module visualization() {
+    $fa=10;
+    $fs=1;
 
     structure_3D();
 
     inside_3D();
 
-    mirror_copy(LEFT, 0)
-    yrot(-45)
-    right(gondola_outer_diameter/2-arc_width-wheel_diameter/2+wheel_rail_depth)
-    zrot(90)
-    double_caster_wing();
+    mirror_copy(LEFT, 0) yrot(-45) right(gondola_outer_diameter/2-arc_width-wheel_diameter/2+wheel_rail_depth) zrot(90) double_caster_wing();
 }
 
+visualization();
+
+part = "double-caster";
+
+module export_part() {
+    if(part == "double-caster") {
+        mirror_copy(LEFT, 0) yrot(-45) right(gondola_outer_diameter/2-arc_width-wheel_diameter/2+wheel_rail_depth) zrot(90) double_caster_wing();
+    } else if(part == "inside") {
+        inside_3D();
+    } else if(part == "structure") {
+        structure_3D();
+    }
+}
+
+// export_part();
 
 // Todo
 
-// - shopping list
+// - normal hlinks!
 // - sliders with other magnets (circular)?
+// - shopping list
 
 
 // V2
@@ -1787,7 +1801,7 @@ module flat() {
     pulley_2D();
 }
 
-flat();
+// flat();
 
 kerf_width = 0.2;
 
