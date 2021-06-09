@@ -19,8 +19,8 @@ module bearing() {
     tube(h=bearing_width, od=bearing_outer_diameter, id=bearing_inner_diameter);
 }
 
-translate([100,200,0])
-    bearing();
+// translate([100,200,0])
+//     bearing();
 
 // Gondola
 module gondola(diameter=120, inner_tube_inner_diameter = 45, inner_tube_outer_diameter = 95, servo_hold_height = 30) {
@@ -29,21 +29,24 @@ module gondola(diameter=120, inner_tube_inner_diameter = 45, inner_tube_outer_di
             union() {
                 difference() {
                     tube(h=thickness, od=diameter, id=bearing_inner_diameter);
+                    down(1)
                     tube(h=2*thickness, od=inner_tube_outer_diameter, id=inner_tube_inner_diameter);
                 }
                 cuboid([20,diameter-10,thickness], anchor=BOTTOM);
                 difference() {
                     tube(h=thickness, od=diameter, id=bearing_inner_diameter);
-                    translate([servo_hold_height,0,0])
-                    cuboid([diameter,diameter,thickness], anchor=BOTTOM);
+                    translate([servo_hold_height,0,-1])
+                    cuboid([diameter,diameter,2*thickness], anchor=BOTTOM);
                 }
             }
+            up(1)
             cyl(l=2*thickness, r=bearing_inner_diameter/2);
         }
     // }
 }
-translate([100,100,0])
-    gondola();
+
+// translate([100,100,0])
+//     gondola();
 
 // Holder
 
@@ -59,8 +62,8 @@ module holder(holder_outer_diameter=45, holder_cap_h=35, notch=10) {
     };
 }
 
-translate([0,100,0])
-    holder();
+// translate([0,100,0])
+//     holder();
 
 module string_holder1(height=40, width=10, notch=10, hole_height = 10) {
     difference() {
@@ -88,8 +91,8 @@ module string_holder1(height=40, width=10, notch=10, hole_height = 10) {
     }
 }
 
-translate([0,200,0])
-    string_holder1();
+// translate([0,200,0])
+//     string_holder1();
 
 
 module string_holder2(height=40, width=10, notch=10, hole_height = 10) {
@@ -126,15 +129,15 @@ module string_holder2(height=40, width=10, notch=10, hole_height = 10) {
     }
 }
 
-translate([0,300,0])
-    string_holder2();
+// translate([0,300,0])
+//     string_holder2();
 
 module divider(inner_diameter=17, outer_diameter=25) {
     tube(h=thickness, od=outer_diameter, id=inner_diameter);
 }
 
-translate([100,300,0])
-    divider();
+// translate([100,300,0])
+//     divider();
 
 module inside_tube(bearing_inner_diameter=17, max_pen_diameter=15, string_diameter=1, cap=false) {
     difference() {
@@ -156,5 +159,51 @@ module inside_tube(bearing_inner_diameter=17, max_pen_diameter=15, string_diamet
     }
 }
 
-translate([100,0,0])
+// translate([100,0,0])
+//     inside_tube();
+
+module render2d() {
+    string_holder1();
+    translate([15,-15,0]) string_holder2();
+    // inside_tube();
+    // divider();
+    // holder();
+    // gondola();
+    // bearing();
+}
+
+// render2d();
+
+module render3d() {
+    // string_holder1();
+    
+    string_holder2();
+
+    left(bearing_width+thickness)
+    yrot(-90)
+    divider();
+
+    left(thickness + (bearing_width+thickness)/2 + bearing_width / 2 - thickness / 2)
+    xcopies(bearing_width+thickness, 2)
+    xrot(90)
+    yrot(-90)
+    holder();
+    
+    yrot(-90)
+    gondola();
+    
+    left(thickness+(bearing_width+thickness)/2)
+    xcopies(bearing_width+thickness, 2)
+    yrot(-90)
+    #bearing();
+
+    left((bearing_width+thickness)/2)
+    xcopies(bearing_width+thickness, 2)
+    left(3*thickness/2+thickness)
+    xcopies(thickness, 3)
+    xrot(90)
+    yrot(-90)
     inside_tube();
+}
+
+render3d();
