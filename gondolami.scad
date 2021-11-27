@@ -1065,6 +1065,10 @@ module screw_hole(od=8) {
     cyl(r=m3_radius, l=2*thickness, $tags="remove");
 }
 
+// TODO: 
+// improve cap: it should not be able to move from side to side along the axis, ears should be longer and a notch should enable to clip the cap to the sides
+// fix main body plate: collision between dovetail and screw_hole!!
+
 module body_slider(slider_width, servo_case_width, servo_case_length, slider_offset_x) {
     diff("remove")
     cuboid([slider_width, body_length, thickness], anchor=BOTTOM){
@@ -1084,6 +1088,10 @@ module body_slider(slider_width, servo_case_width, servo_case_length, slider_off
             screw_hole();
         };
 
+        // right(5)
+        fwd(body_length/2)
+        up(thickness)
+        dovetail("female", angle=0, slide=cap_side2_notch, width=thickness, height=2*thickness, $tags="remove");
     }
 }
 
@@ -1132,6 +1140,109 @@ module main_body_plate() {
         mirror_copy(FRONT, body_length/2-body_sliders_link/2) cuboid([gondola_width/2, body_sliders_link, thickness], anchor=BOTTOM);
     }
 }
+
+main_body_plate();
+
+cap_side_width = 6;
+cap_side_height = 20;
+cap_side2_height = 16;
+cap_side2_width = 10;
+cap_side2_offset_y = 4;
+cap_side2_notch = 6;
+cap_side_offset_y = 4;
+cap_height = 10;
+cap_radius = 5;
+cap_holder_offset_y = 6;
+cap_margin = 2;
+cap_n_slice = 8;
+piano_string_diameter = 1;
+
+module cap_slice(hole=true, ears=false) {
+    difference() {
+        cuboid([(cap_radius+cap_margin)*2+(ears?2*thickness:0), (cap_radius+cap_margin)*2, thickness], anchor=BOTTOM);
+        if(hole) {
+            cyl(l=cap_height, r=cap_radius);
+        }
+        mirror_copy(LEFT, 0)
+        mirror_copy(FRONT, 0)
+        translate([cap_radius, cap_radius, 0])
+        cyl(l=cap_height, r=piano_string_diameter);
+    }
+}
+
+module cap_holder_holding_sides() {
+    diff("remove") {
+        cuboid([cap_side2_height, cap_side2_width, thickness], anchor=BOTTOM);
+        translate([cap_side2_height/2 - 3*thickness/2, cap_side2_width/2 - cap_side2_notch/2, 0]) cuboid([thickness, cap_side2_notch, 2*thickness], anchor=BOTTOM, $tags="remove");
+        left(cap_side2_height/2-cap_side2_offset_y) fwd(cap_side2_width/2) up(thickness/2) screw_hole();
+    }
+}
+
+module cap_holder_rotating_sides() {
+    diff("remove") {
+        cuboid([cap_side_width, cap_side_height, thickness], anchor=BOTTOM);
+        fwd(cap_side_height/2) up(thickness/2) screw_hole();
+    }
+}
+
+module cap_holder() {
+
+    // holding sides
+    xrot(-90)
+    mirror_copy(LEFT, cap_radius+cap_margin+thickness)
+    fwd(6)
+    up(-6)
+    zrot(90)
+    xrot(-90)
+    cap_holder_holding_sides();
+
+    // rotating sides
+    mirror_copy(LEFT, cap_radius+cap_margin)
+    zrot(90)
+    xrot(-90)
+    cap_holder_rotating_sides();
+    
+    // Cap
+    down(4) {
+        // xrot(90) {
+        //     cyl(l=cap_height, r=cap_radius);
+        // }
+
+        // mirror_copy(FRONT, 0)
+        ycopies(thickness, cap_n_slice)
+        xrot(90)
+        #cap_slice(true, $idx==3 || $idx==4);
+        
+        fwd(thickness * (cap_n_slice + 1)/2)
+        xrot(90)
+        cap_slice(false);
+    }
+}
+
+fwd(body_length/2)
+cap_holder();
+
+module cap_holder_2d() {
+
+    right(cap_side2_width/2 + 4)
+    ycopies(cap_side2_width + 4 + 1, 2)
+    cap_holder_holding_sides();
+
+    left(cap_side_width + 4)
+    xcopies(cap_side_width + 4, 2)
+    cap_holder_rotating_sides();
+    
+    fwd( (cap_radius + cap_margin) * cap_n_slice)
+    left(5*cap_side_width)
+    ycopies(2 * (cap_radius + cap_margin) + 1, cap_n_slice)
+    cap_slice(true, $idx==3 || $idx==4);
+
+    fwd(cap_side_height + (cap_radius + cap_margin))
+    left(2*cap_side_width)
+    cap_slice(false);
+}
+
+// cap_holder_2d();
 
 module body() {
 
@@ -1420,6 +1531,8 @@ module inside_3D(type="point88") {
     up(type == "squeezer" ? squeezer_body_height : type == "point88" ? point88_body_height : point88_body_height)
     body();
 }
+
+// inside_3D();
 
 module inside_2D(type="point88") {
 
@@ -1728,7 +1841,7 @@ module visualization() {
     mirror_copy(LEFT, 0) yrot(-45) right(gondola_outer_diameter/2-arc_width-wheel_diameter/2+wheel_rail_depth) zrot(90) double_caster_wing();
 }
 
-visualization();
+// visualization();
 
 part = "double-caster";
 
