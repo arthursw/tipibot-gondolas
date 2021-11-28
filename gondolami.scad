@@ -15,8 +15,8 @@ include <BOSL2/gears.scad>
 function hexagon_h_to_r(h) = h * 2 / sqrt(3);
 function hexagon_r_to_h(r) = r * sqrt(3) / 2;
 
-$fa=1;
-$fs=0.1;
+$fa=2;
+$fs=2;
 
 // Print number of sides from $fa and $fs:
 
@@ -544,6 +544,7 @@ module wing() {
 
 // wing();
 
+
 module double_caster_wing_attachment() {
     double_caster_wing_attachment_width = 3*thickness;
     difference() {
@@ -562,6 +563,7 @@ module wing_with_attachment() {
     back(wing_subnotch_y)
     double_caster_wing_attachment();
 }
+
 // wing_with_attachment();
 
 module double_caster_wing() {
@@ -1141,7 +1143,7 @@ module main_body_plate() {
     }
 }
 
-main_body_plate();
+// main_body_plate();
 
 cap_side_width = 6;
 cap_side_height = 20;
@@ -1219,8 +1221,8 @@ module cap_holder() {
     }
 }
 
-fwd(body_length/2)
-cap_holder();
+// fwd(body_length/2)
+// cap_holder();
 
 module cap_holder_2d() {
 
@@ -1927,3 +1929,247 @@ module compute_2D() {
         }
     }
 }
+
+
+// WING MI : Wing with motor included
+
+pulley_thickness = 3 * thickness;
+pulley_hole_margin = 2;
+pulley_hole_width = pulley_thickness + 2 * pulley_hole_margin;
+pulley_hole_length = 2 * pulley_outer_radius + 2 * pulley_hole_margin;
+
+big_wheel_offset_x = 3 * thickness;
+big_wheel_radius = 80;
+small_wheel_radius = 10;
+big_wheel_hole_width = thickness + 2 * pulley_hole_margin;
+big_wheel_hole_length = pulley_outer_radius + pulley_hole_margin + big_wheel_radius + pulley_hole_margin + 2 * small_wheel_radius + pulley_hole_margin;
+
+wing_plate_margin = 10;
+wing_plate_width = pulley_hole_width + big_wheel_offset_x + big_wheel_hole_width + 2 * wing_plate_margin;
+wing_plate_length = big_wheel_hole_length + wing_plate_margin;
+
+module fake_pulley() {
+    cyl(r=pulley_chain_radius, l=thickness);
+    mirror_copy(TOP, thickness)
+    cyl(r=pulley_outer_radius, l=thickness);
+}
+
+pulley_holder_width = 20;
+// pulley_holder_x_spacing = pulley_hole_width + big_wheel_hole_width + 2 * thickness + thickness;
+pulley_holder_margin = 3;
+pulley_holder_height = pulley_outer_radius + 2 * thickness + pulley_holder_margin;
+
+module pulley_holder() {
+    difference() {
+        cuboid([pulley_holder_height, pulley_holder_width, thickness]);
+        left(pulley_holder_height/2-thickness-thickness/2)
+        fwd(pulley_holder_width/4)
+        cuboid([thickness, pulley_holder_width/2, 2*thickness]);
+    }
+}
+
+motor_holder_width = 30; // TODO check nema width
+motor_holder_height = pulley_holder_height;
+
+module motor_holder() {
+    difference() {
+        cuboid([motor_holder_height, motor_holder_width, thickness]);
+        left(motor_holder_height/2-thickness-thickness/2)
+        back(motor_holder_width/4)
+        cuboid([thickness, motor_holder_width/2, 2*thickness]);
+    }
+}
+
+module motor_holder_rot() {
+    yrot(90)
+    motor_holder();
+}
+
+module pulley_holder_rot() {
+    yrot(90)
+    pulley_holder();
+}
+
+// pulley_holder_rot();
+
+wing_pulley_y = wing_height-pulley_hole_length/2;
+wing_pulley_z = pulley_holder_height/2-thickness-thickness/2;
+
+pulley_holder_left_x = pulley_hole_width+thickness+thickness/2;
+pulley_holder_middle_x = -big_wheel_offset_x/2;
+pulley_holder_right_x = -big_wheel_offset_x-big_wheel_hole_width-thickness-thickness/2;
+
+big_wheel_x = -big_wheel_offset_x-big_wheel_hole_width/2;
+pulley_y = -big_wheel_offset_x-big_wheel_hole_width/2;
+small_wheel_y = wing_pulley_y - big_wheel_radius - small_wheel_radius;
+
+
+sensor_radius = 14/2;
+sensor_length = 50;
+
+module sensor() {
+    xrot(90)
+    cyl(r=sensor_radius, l=sensor_length);
+}
+
+sensor_holder_margin = 3;
+sensor_holder_width = 2 * sensor_radius + 2 * sensor_holder_margin;
+sensor_holder_height = pulley_radius + 2 * thickness + sensor_radius + sensor_holder_margin;
+sensor_y = wing_height-pulley_hole_length-sensor_length/2;
+sensor_holder_x = 10;
+sensor_holder_y = wing_height-pulley_hole_length - sensor_holder_x;
+
+module sensor_holder() {
+    difference() {
+        cuboid([sensor_holder_width, sensor_holder_height, thickness]);
+        
+        fwd(sensor_holder_height/2-sensor_holder_margin-sensor_radius-thickness/2)
+        cyl(r=sensor_radius, l=2*thickness);
+
+        // invert
+        // fwd(sensor_holder_height/2-thickness-thickness/2)
+        // xcopies(pulley_hole_width - thickness, 2)
+        // #cuboid([thickness, thickness, 2*thickness]);
+
+        // Sensor holder inside hole
+        back(sensor_holder_height/2-thickness-thickness/2)
+        cuboid([pulley_hole_width-2*thickness, thickness, 2*thickness]);
+
+        // Sensor holder outside holes
+        sensor_holder_hole_width = (sensor_holder_width - pulley_hole_width) / 2;
+        sensor_holder_hole_spacing = pulley_hole_width + sensor_holder_hole_width;
+        back(sensor_holder_height/2-thickness-thickness/2)
+        xcopies(sensor_holder_hole_spacing, 2)
+        cuboid([sensor_holder_hole_width, thickness, 2*thickness]);
+    }
+}
+// sensor_holder();
+module sensor_holder_rot() {
+    xrot(90)
+    sensor_holder();
+}
+
+pulley_holder_notch_length = pulley_outer_radius;
+
+module pulley_holder_notch() {
+    cuboid([thickness, pulley_holder_notch_length, 2*thickness]);
+}
+
+module wing_mi() {
+    difference() {
+        
+        union() {
+            mirror_copy(LEFT, wing_length/2)
+            half_wing();
+
+            left(wing_plate_width/2-big_wheel_offset_x-big_wheel_hole_width-wing_plate_margin)
+            back(wing_height-wing_plate_length/2)
+            cuboid([wing_plate_width, wing_plate_length, thickness]);
+        }
+
+        // pulley hole
+        left(pulley_hole_width/2)
+        back(wing_pulley_y)
+        cuboid([pulley_hole_width, pulley_hole_length, 2*thickness]);
+
+        // Sensor holes
+        left(pulley_hole_width/2)
+        back(wing_height-pulley_hole_length - sensor_holder_x/2-thickness/4)
+        xcopies(pulley_hole_width - thickness, 2)
+        cuboid([thickness, sensor_holder_x+thickness/2, 2*thickness]);
+
+        // big wheel hole
+        left(big_wheel_x)
+        back(wing_height-big_wheel_hole_length/2)
+        cuboid([big_wheel_hole_width, big_wheel_hole_length, 2*thickness]);
+
+        // Pulley holder notches
+        back(wing_height-pulley_holder_notch_length/2) {
+            left(pulley_holder_left_x)
+            pulley_holder_notch();
+            left(pulley_holder_middle_x)
+            pulley_holder_notch();
+            left(pulley_holder_right_x)
+            pulley_holder_notch();
+        }
+
+        motor_holder_notch_length = wing_plate_length - pulley_outer_radius - big_wheel_radius - small_wheel_radius;
+        // Motor holder notch
+        back(small_wheel_y-motor_holder_notch_length/2) {
+            left(pulley_holder_right_x)
+            cuboid([thickness, motor_holder_notch_length, 2*thickness]);
+        }
+    }
+}
+
+module wing_mi_viz() {
+
+    // Pulley holders
+    back(wing_pulley_y)
+    down(wing_pulley_z) {
+        // left(-pulley_hole_width-thickness-thickness/2)
+        left(pulley_holder_left_x)
+        pulley_holder_rot();
+        left(pulley_holder_middle_x)
+        pulley_holder_rot();
+        left(pulley_holder_right_x)
+        pulley_holder_rot();
+    }
+
+    // Motor holder
+    left(pulley_holder_right_x)
+    back(small_wheel_y)
+    down(wing_pulley_z) {
+        #motor_holder_rot();
+    }
+
+    // Sensor holder
+    down(sensor_holder_height/2-thickness-thickness/2)
+    left(pulley_hole_width/2)
+    back(sensor_holder_y)
+    sensor_holder_rot();
+
+    // Sensor
+    down(pulley_radius)
+    left(pulley_hole_width/2)
+    back(sensor_y)
+    #sensor();
+
+    // Wing
+    wing_mi();
+
+    // Wheels & pulley
+    down(pulley_radius) {
+        // Pulley
+        left(pulley_hole_width/2)
+        back(wing_pulley_y)
+        yrot(90)
+        fake_pulley();
+
+        // Big wheel
+        left(big_wheel_x)
+        back(wing_pulley_y)
+        yrot(90)
+        cyl(r=big_wheel_radius, l=thickness);
+
+        // Small wheel
+        left(big_wheel_x)
+        back(small_wheel_y)
+        yrot(90)
+        cyl(r=small_wheel_radius, l=thickness);
+    }
+
+}
+
+// TODO:
+// - model axes
+// - offset the y position of pulley (and every attached pieces) to control where the string arrives in the wing
+// - double motor holder thickness to make it stronger (and other parts)
+// - model wheels / gears
+// - model nema 17 with holes
+// - fix dimensions
+
+// wing_mi_viz();
+// pulley_holder_rot();
+
+visualization();
