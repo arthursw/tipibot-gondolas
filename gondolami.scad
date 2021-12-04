@@ -1089,11 +1089,6 @@ module body_slider(slider_width, servo_case_width, servo_case_length, slider_off
         position(LEFT) right(m3_radius) mirror_copy(FRONT, (body_length-4*thickness) / 2) {
             screw_hole();
         };
-
-        // right(5)
-        fwd(body_length/2)
-        up(thickness)
-        dovetail("female", angle=0, slide=cap_side2_notch, width=thickness, height=2*thickness, $tags="remove");
     }
 }
 
@@ -1135,23 +1130,13 @@ module magnet_blocker() {
 }
 // magnet_blocker();
 
-module main_body_plate() {
-    union () {
-        mirror_copy(LEFT, slider_offset_x) body_slider(slider_width, servo_case_width, servo_case_length, slider_offset_x);
-        
-        mirror_copy(FRONT, body_length/2-body_sliders_link/2) cuboid([gondola_width/2, body_sliders_link, thickness], anchor=BOTTOM);
-    }
-}
-
-// main_body_plate();
-
-cap_side_width = 6;
-cap_side_height = 20;
-cap_side2_height = 16;
-cap_side2_width = 10;
-cap_side2_offset_y = 4;
-cap_side2_notch = 6;
-cap_side_offset_y = 4;
+cap_rotating_side_width = 6;
+cap_rotating_side_height = 20;
+cap_holding_side_height = 16;
+cap_holding_side_width = 10;
+cap_holding_side_offset_y = 4;
+cap_holding_side_notch = cap_holding_side_width/2;
+cap_rotating_side_offset_y = 4;
 cap_height = 10;
 cap_radius = 5;
 cap_holder_offset_y = 6;
@@ -1159,9 +1144,31 @@ cap_margin = 2;
 cap_n_slice = 8;
 piano_string_diameter = 1;
 
+module main_body_plate() {
+    difference() {
+        union () {
+            // Sides
+            mirror_copy(LEFT, slider_offset_x) 
+            body_slider(slider_width, servo_case_width, servo_case_length, slider_offset_x);
+            
+            // Front & back links
+            mirror_copy(FRONT, body_length/2-body_sliders_link/2) 
+            cuboid([gondola_width/2, body_sliders_link, thickness], anchor=BOTTOM);
+        }
+        // Cap holder notches
+        // placed at the center of the body sliders
+        mirror_copy(LEFT, slider_offset_x)
+        fwd(body_length/2-cap_holding_side_notch/2)
+        cuboid([thickness, cap_holding_side_notch, 2*thickness], anchor=BOTTOM);
+    }
+}
+
+// main_body_plate();
+
 module cap_slice(hole=true, ears=false) {
     difference() {
-        cuboid([(cap_radius+cap_margin)*2+(ears?2*thickness:0), (cap_radius+cap_margin)*2, thickness], anchor=BOTTOM);
+        final_cap_ear_width = 2*(cap_radius+cap_margin)+(ears?2*(cap_ear_width-cap_radius-cap_margin):0);
+        cuboid([final_cap_ear_width, (cap_radius+cap_margin)*2, thickness], anchor=BOTTOM);
         if(hole) {
             cyl(l=cap_height, r=cap_radius);
         }
@@ -1169,42 +1176,53 @@ module cap_slice(hole=true, ears=false) {
         mirror_copy(FRONT, 0)
         translate([cap_radius, cap_radius, 0])
         cyl(l=cap_height, r=piano_string_diameter);
+        
+        if(ears) {
+            mirror_copy(LEFT, cap_radius+cap_margin+magnet_size/2)
+            cuboid([magnet_size, magnet_size, 2*thickness], anchor=BOTTOM);
+        }
     }
 }
 
 module cap_holder_holding_sides() {
     diff("remove") {
-        cuboid([cap_side2_height, cap_side2_width, thickness], anchor=BOTTOM);
-        translate([cap_side2_height/2 - 3*thickness/2, cap_side2_width/2 - cap_side2_notch/2, 0]) cuboid([thickness, cap_side2_notch, 2*thickness], anchor=BOTTOM, $tags="remove");
-        left(cap_side2_height/2-cap_side2_offset_y) fwd(cap_side2_width/2) up(thickness/2) screw_hole();
+        cuboid([cap_holding_side_height, cap_holding_side_width, thickness], anchor=BOTTOM);
+        
+        translate([cap_holding_side_height/2 - 3*thickness/2, cap_holding_side_width/2 - cap_holding_side_notch/2, 0]) 
+        cuboid([thickness, cap_holding_side_notch, 2*thickness], anchor=BOTTOM, $tags="remove");
+
+        left(cap_holding_side_height/2-cap_holding_side_offset_y) fwd(cap_holding_side_width/2) up(thickness/2) screw_hole();
     }
 }
 
 module cap_holder_rotating_sides() {
     diff("remove") {
-        cuboid([cap_side_width, cap_side_height, thickness], anchor=BOTTOM);
-        fwd(cap_side_height/2) up(thickness/2) screw_hole();
+        cuboid([cap_rotating_side_width, cap_rotating_side_height, thickness], anchor=BOTTOM);
+        fwd(cap_rotating_side_height/2) up(thickness/2) screw_hole();
     }
 }
+
+cap_ear_width = slider_offset_x-thickness/2;
 
 module cap_holder() {
 
     // holding sides
-    xrot(-90)
-    mirror_copy(LEFT, cap_radius+cap_margin+thickness)
-    fwd(6)
-    up(-6)
-    zrot(90)
-    xrot(-90)
+    fwd(body_length/2-cap_holding_side_width/2)
+    up(cap_holding_side_height/2-thickness)
+    mirror_copy(LEFT, slider_offset_x+thickness/2) // cap_radius+cap_margin+thickness+20)
+    yrot(90)
     cap_holder_holding_sides();
 
     // rotating sides
-    mirror_copy(LEFT, cap_radius+cap_margin)
+    up(cap_rotating_side_height/2-thickness-2*(cap_rotating_side_height-cap_holding_side_height))
+    fwd(body_length/2)
+    mirror_copy(LEFT, cap_ear_width-thickness)
     zrot(90)
     xrot(-90)
     cap_holder_rotating_sides();
     
-    // Cap
+    // // Cap
+    fwd(body_length/2)
     down(4) {
         // xrot(90) {
         //     cyl(l=cap_height, r=cap_radius);
@@ -1213,7 +1231,7 @@ module cap_holder() {
         // mirror_copy(FRONT, 0)
         ycopies(thickness, cap_n_slice)
         xrot(90)
-        #cap_slice(true, $idx==3 || $idx==4);
+        cap_slice(true, $idx==3);
         
         fwd(thickness * (cap_n_slice + 1)/2)
         xrot(90)
@@ -1221,26 +1239,25 @@ module cap_holder() {
     }
 }
 
-// fwd(body_length/2)
 // cap_holder();
 
 module cap_holder_2d() {
 
-    right(cap_side2_width/2 + 4)
-    ycopies(cap_side2_width + 4 + 1, 2)
+    right(cap_holding_side_width/2 + 4)
+    ycopies(cap_holding_side_width + 4 + 1, 2)
     cap_holder_holding_sides();
 
-    left(cap_side_width + 4)
-    xcopies(cap_side_width + 4, 2)
+    left(cap_rotating_side_width + 4)
+    xcopies(cap_rotating_side_width + 4, 2)
     cap_holder_rotating_sides();
     
     fwd( (cap_radius + cap_margin) * cap_n_slice)
-    left(5*cap_side_width)
+    left(5*cap_rotating_side_width)
     ycopies(2 * (cap_radius + cap_margin) + 1, cap_n_slice)
     cap_slice(true, $idx==3 || $idx==4);
 
-    fwd(cap_side_height + (cap_radius + cap_margin))
-    left(2*cap_side_width)
+    fwd(cap_rotating_side_height + (cap_radius + cap_margin))
+    left(2*cap_rotating_side_width)
     cap_slice(false);
 }
 
@@ -1914,9 +1931,13 @@ module flat() {
     fwd(300)
     ycopies(2.5*pulley_radius, 2)
     pulley_2D();
+
+    fwd(-100)
+    left(-340)
+    cap_holder_2d();
 }
 
-// flat();
+flat();
 
 kerf_width = 0.2;
 
@@ -1930,6 +1951,7 @@ module compute_2D() {
     }
 }
 
+// compute_2D();
 
 // WING MI : Wing with motor included
 
@@ -2172,4 +2194,4 @@ module wing_mi_viz() {
 // wing_mi_viz();
 // pulley_holder_rot();
 
-visualization();
+// visualization();
