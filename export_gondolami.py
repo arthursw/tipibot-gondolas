@@ -8,7 +8,7 @@ args = parser.parse_args()
 
 
 # parts = ['kerf_test', 'tests', 'main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'double_caster', 'wing', 'vlink_with_comb', 
-# 'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder_sides', 'cap', 'pulley']
+# 'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder', 'cap', 'pulley']
 parts = ['servo_case']
 
 export_command = args.type

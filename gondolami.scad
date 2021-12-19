@@ -1146,7 +1146,6 @@ point88_body_height = point88_holder_height - ground_to_pen_center; // gondola_h
 
 cap_height = 40;
 cap_radius = 5;
-cap_holder_offset_y = 6;
 cap_margin = 2;
 cap_n_slice = ceil(cap_height / thickness);
 piano_string_diameter = 1;
@@ -1209,7 +1208,7 @@ module cap_side2() {
 
 cap_ear_width = slider_offset_x-thickness/2;
 
-pen_center_to_body = point88_body_height;
+pen_center_to_body = point88_body_height + thickness / 2;
 
 cap_slide_width = 2 * cap_ear_width;
 cap_slide_height = pen_center_to_body + cap_radius + cap_margin + cs1_h - cap_axe_diameter / 2 - cs2_notch_top_to_axe_bottom;
@@ -1231,8 +1230,10 @@ module cap_slide() {
 }
 // cap_slide();
 
-module cap_holder2() {
-    translate([0, 0, pen_center_to_body + cs1_h])
+module cap_holder() {
+    translate([0, - 3 * thickness / 2 + thickness, 0])
+    zrot(180)
+    translate([0, 0, pen_center_to_body + cs1_h - thickness / 2])
     xrot(90) {
         cap_slide();
 
@@ -1246,20 +1247,32 @@ module cap_holder2() {
     }
 }
 
+module cap_holder_2d() {
+    translate([0, +cs2_notch_top_to_axe_bottom+cap_axe_diameter/2, 0])
+    cap_slide();
 
-// cap_holder2();
+    translate([cap_slide_width/2+3*thickness/2+1, -cap_axe_diameter/2-thickness, 0])
+    cap_side2();
+
+    translate([cap_slide_width/2+3*(3*thickness/2)+2, -cap_axe_diameter/2-thickness - cs2_height + thickness + axe_diameter/2, 0])
+    cap_side1();
+}
+
+// cap_holder_2d();
+
+// cap_holder();
 
 
 
 
-cap_rotating_side_width = 3 * thickness;
-cap_axe_diameter2 = 3;
-cap_side_margin = 3;
-cap_rotating_side_height = cs_notch + cap_axe_diameter + cap_side_margin;
-cap_holding_side_h = 2 * thickness;
-cap_holding_side_height = 3 * thickness;
-cap_holding_side_width = cs_notch + 3 * thickness;;
-cap_holding_side_height2 = cap_holding_side_h + cap_holding_side_height / 2 + cap_axe_diameter / 2 + cap_side_margin;
+// cap_rotating_side_width = 3 * thickness;
+// cap_axe_diameter2 = 3;
+// cap_side_margin = 3;
+// cap_rotating_side_height = cs_notch + cap_axe_diameter + cap_side_margin;
+// cap_holding_side_h = 2 * thickness;
+// cap_holding_side_height = 3 * thickness;
+// cap_holding_side_width = cs_notch + 3 * thickness;;
+// cap_holding_side_height2 = cap_holding_side_h + cap_holding_side_height / 2 + cap_axe_diameter / 2 + cap_side_margin;
 
 
 module main_body_plate() {
@@ -1275,9 +1288,10 @@ module main_body_plate() {
         }
         // Cap holder notches
         // placed at the center of the body sliders
-        fwd(body_length/2-cs_notch/2)
+        extern_notch = cs_notch/2 + thickness;
+        fwd(body_length/2-extern_notch/2)
         mirror_copy(LEFT, slider_offset_x)
-        cuboid([thickness, cs_notch, 2*thickness], anchor=BOTTOM);
+        cuboid([thickness, extern_notch, 2*thickness], anchor=BOTTOM);
         fwd(body_length/2-thickness/2)
         mirror_copy(LEFT, slider_offset_x-thickness)
         cuboid([thickness, thickness, 2*thickness], anchor=BOTTOM);
@@ -1288,7 +1302,8 @@ module main_body_plate() {
 
 module cap_slice(hole=true) {
     difference() {
-        final_cap_ear_width = 2*(cap_radius+cap_margin)+(ears?2*(cap_ear_width-cap_radius-cap_margin):0);
+        // final_cap_ear_width = 2*(cap_radius+cap_margin)+(ears?2*(cap_ear_width-cap_radius-cap_margin):0);
+        final_cap_ear_width = 2*(cap_radius+cap_margin);
         cuboid([final_cap_ear_width, (cap_radius+cap_margin)*2, thickness], anchor=BOTTOM);
         if(hole) {
             cyl(l=cap_height, r=cap_radius);
@@ -1305,32 +1320,32 @@ module cap_slice(hole=true) {
     }
 }
 
-module cap_holding_side() {
-    difference() {
-        union() {
+// module cap_holding_side() {
+//     difference() {
+//         union() {
             
-            cuboid([cap_holding_side_height, cap_holding_side_width, thickness], anchor=BOTTOM);
+//             cuboid([cap_holding_side_height, cap_holding_side_width, thickness], anchor=BOTTOM);
 
-            translate([cap_holding_side_height2 / 2 - cap_holding_side_height/2, -cap_holding_side_width / 2 + 3 * thickness / 2, 0])
-            #cuboid([cap_holding_side_height2, 3 * thickness, thickness], anchor=BOTTOM);
+//             translate([cap_holding_side_height2 / 2 - cap_holding_side_height/2, -cap_holding_side_width / 2 + 3 * thickness / 2, 0])
+//             #cuboid([cap_holding_side_height2, 3 * thickness, thickness], anchor=BOTTOM);
             
-        }
+//         }
         
-        translate([0, cap_holding_side_width/2 - cs_notch/2, 0]) 
-        cuboid([thickness, cs_notch, 2*thickness]);
+//         translate([0, cap_holding_side_width/2 - cs_notch/2, 0]) 
+//         cuboid([thickness, cs_notch, 2*thickness]);
 
 
-    }
-}
+//     }
+// }
 
-// cap_holding_side();
+// // cap_holding_side();
 
-module cap_holder_rotating_sides() {
-    diff("remove") {
-        cuboid([cap_rotating_side_width, cap_rotating_side_height, thickness], anchor=BOTTOM);
-        fwd(cap_rotating_side_height/2) up(thickness/2) screw_hole();
-    }
-}
+// module cap_holder_rotating_sides() {
+//     diff("remove") {
+//         cuboid([cap_rotating_side_width, cap_rotating_side_height, thickness], anchor=BOTTOM);
+//         fwd(cap_rotating_side_height/2) up(thickness/2) screw_hole();
+//     }
+// }
 
 
 
@@ -1363,53 +1378,52 @@ module cap_2d() {
     cap_slice(false);
 }
 
-module cap_holder_sides() {
-    // holding sides
-    fwd(-cap_holding_side_width/2)
-    up(cap_holding_side_height/2-thickness)
-    mirror_copy(LEFT, slider_offset_x+thickness/2) // cap_radius+cap_margin+thickness+20)
-    yrot(90)
-    cap_holder_holding_sides();
+// module cap_holder_sides() {
+//     // holding sides
+//     fwd(-cap_holding_side_width/2)
+//     up(cap_holding_side_height/2-thickness)
+//     mirror_copy(LEFT, slider_offset_x+thickness/2) // cap_radius+cap_margin+thickness+20)
+//     yrot(90)
+//     cap_holder_holding_sides();
 
-    // rotating sides
-    up(cap_rotating_side_height/2-thickness-2*(cap_rotating_side_height-cap_holding_side_height))
+//     // rotating sides
+//     up(cap_rotating_side_height/2-thickness-2*(cap_rotating_side_height-cap_holding_side_height))
     
-    mirror_copy(LEFT, cap_ear_width-thickness)
-    zrot(90)
-    xrot(-90)
-    cap_holder_rotating_sides();
-}
+//     mirror_copy(LEFT, cap_ear_width-thickness)
+//     zrot(90)
+//     xrot(-90)
+//     cap_holder_rotating_sides();
+// }
 
 // cap_holder_sides();
 
-module cap_holder_sides_2d() {
-    right(cap_holding_side_width/2 + 4)
-    ycopies(cap_holding_side_width + 4 + 1, 2)
-    cap_holder_holding_sides();
+// module cap_holder_sides_2d() {
+//     right(cap_holding_side_width/2 + 4)
+//     ycopies(cap_holding_side_width + 4 + 1, 2)
+//     cap_holder_holding_sides();
 
-    left(cap_rotating_side_width + 4)
-    xcopies(cap_rotating_side_width + 4, 2)
-    cap_holder_rotating_sides();
-}
+//     left(cap_rotating_side_width + 4)
+//     xcopies(cap_rotating_side_width + 4, 2)
+//     cap_holder_rotating_sides();
+// }
 
 
-module cap_holder() {
-    cap_holder_sides();
-    
-    // // Cap
-    down(4)
+module cap_ensemble() {
+    cap_holder();
     cap();
 }
 
 // fwd(body_length/2)
-// cap_holder();
+// cap_ensemble();
 
-module cap_holder_2d() {
-    cap_holder_sides_2d();
+module cap_ensemble_2d() {
+    cap_holder_2d();
+    left(35)
     cap_2d();
 }
 
-// cap_holder_2d();
+// cap_ensemble_2d();
+
 // main_body_plate();
 module body(servo=true) {
 
@@ -2309,7 +2323,7 @@ module flat() {
 
     fwd(-100)
     left(-340)
-    cap_holder_2d();
+    cap_ensemble_2d();
 }
 
 // tests();
@@ -2399,8 +2413,8 @@ module export_part() {
     if(part == "pen_wedge") {
         pen_wedge();
     }
-    if(part == "cap_holder_sides") {
-        cap_holder_sides();
+    if(part == "cap_holder") {
+        cap_holder();
     }
     if(part == "cap") {
         cap();
@@ -2479,8 +2493,8 @@ module export_part_2d_no_render() {
     if(part == "pen_wedge") {
         pen_wedge_2d();
     }
-    if(part == "cap_holder_sides") {
-        cap_holder_sides_2d();
+    if(part == "cap_holder") {
+        cap_holder_2d();
     }
     if(part == "cap") {
         cap_2d();
@@ -2614,41 +2628,42 @@ module import_pen_wedge() {
     import_part("pen_wedge");
 }
 
-module import_cap_holder_sides() {
-    import_part("cap_holder_sides");
+module import_cap_holder() {
+    import_part("cap_holder");
 }
 
 module import_cap() {
     import_part("cap");
 }
 
-module import_cap_holder() {
-    fwd(body_length/2) {
-        up(point88_body_height)
-        // import_cap_holder_sides();
-        cap_holder_sides();
-        import_cap();
-    }
+module import_cap_ensemble() {
+    translate([0, -body_length/2, thickness/2])
+    import_cap_holder();
+    import_cap();
+
+    // fwd(body_length/2) {
+    //     up(point88_body_height)
+    //     // import_cap_holder();
+    //     cap_holder();
+    //     import_cap();
+    // }
 }
 
 module visualization_loaded() {
-    // import_main_arc1();
-    // import_main_arc2();
-    // import_hlink();
-    // import_hlink_cap();
-    // import_double_caster_wing();
-    // import_vlink_with_comb();
-    // import_pencil_holder();
-    // import_servo_case();
+    import_main_arc1();
+    import_main_arc2();
+    import_hlink();
+    import_hlink_cap();
+    import_double_caster_wing();
+    import_vlink_with_comb();
+    import_pencil_holder();
+    import_servo_case();
     import_body();
     import_point88_ensemble();
-    // import_pen_wedge();
-    import_cap_holder();
+    import_pen_wedge();
+    import_cap_ensemble();
 }
 
 if(command == "") {
-    // visualization_loaded();
-    // import_body();
-    // cap_2d();
+    visualization_loaded();
 }
-// servo_case();
