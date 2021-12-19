@@ -64,7 +64,7 @@ chain_hole_height = 6;
 chain_hole_width = 3;
 chain_hole_x_dist = 20;
 
-sensor_diameter = 12;
+sensor_diameter = 16;
 
 body_cap_y = -height/2+body_cap_height/2;
 
@@ -182,7 +182,7 @@ module side() {
     }
 }
 
-sensor_diameter = 16;
+// sensor_diameter = 16;
 
 module sensor_holder() {
     union() {
@@ -232,4 +232,80 @@ module viz3d() {
 
 
 // side();
-viz3d();
+// viz3d();
+
+// body();
+// nema_holder();
+// body_cap();
+// #side();
+// #sensor_holder();
+
+part = "";
+
+module export_part() {
+    if(part == "body") {
+        body();
+    }
+    if(part == "nema_holder") {
+        nema_holder();
+    }
+    if(part == "body_cap") {
+        body_cap();
+    }
+    if(part == "side") {
+        side();
+    }
+    if(part == "sensor_holder") {
+        sensor_holder();
+    }
+}
+
+// part = "side";
+module export_part_2d_no_render() {
+    if(part == "body") {
+        body();
+    }
+    if(part == "nema_holder") {
+        nema_holder();
+    }
+    if(part == "body_cap") {
+        body_cap();
+    }
+    if(part == "side") {
+        mirror_copy(LEFT, (side_width+4*thickness+1)/2)
+        side();
+    }
+    if(part == "sensor_holder") {
+        sensor_holder();
+    }
+}
+// export_part_2d_no_render();
+kerf_width = 0.2;
+
+module export_part_2d() {
+    $fa=1;
+    $fs=0.5;
+    render() {
+        offset(delta=kerf_width/2) {
+            projection() {
+                export_part_2d_no_render();
+            }
+        }
+    }
+}
+
+// export_part_2d();
+
+command = "";
+
+module export_command() {
+    if(command == "3d") {
+        export_part();
+    }
+    if(command == "2d") {
+        export_part_2d();
+    }
+}
+
+export_command();
+// viz3d();

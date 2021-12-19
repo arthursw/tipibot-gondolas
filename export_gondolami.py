@@ -6,15 +6,16 @@ parser = argparse.ArgumentParser(description='Export Gondolami.')
 parser.add_argument('-t', '--type', type=str, help='Export type', default='3d', choices=['3d', '2d'])
 args = parser.parse_args()
 
-# parts = ['double-caster', 'structure', 'inside']
 
-parts = ['kerf_test', 'tests', 'main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'double_caster', 'wing', 'vlink_with_comb', 
-'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder_sides', 'cap', 'pulley']
+# parts = ['kerf_test', 'tests', 'main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'double_caster', 'wing', 'vlink_with_comb', 
+# 'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder_sides', 'cap', 'pulley']
+parts = ['servo_case']
 
 export_command = args.type
 
 file_format = 'stl' if export_command == '3d' else 'svg'
 
+# kerf_widths = [0.1, 0.2, 0.3] if export_command == '2d' else [0]
 kerf_widths = [0.1, 0.2, 0.3] if export_command == '2d' else [0]
 
 for kerf_width in kerf_widths:

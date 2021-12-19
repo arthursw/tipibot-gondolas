@@ -205,7 +205,7 @@ module main_arc(od=gondola_outer_diameter, arc_width=arc_width, width=gondola_wi
     // }
 }
 
-// main_arc(marble_nut=13, targets=true);
+// main_arc(marble_nut=10, targets=true);
 
 module main_arc_2d(od=gondola_outer_diameter, arc_width=arc_width, width=gondola_width, height=gondola_height, marble_nut=0, side_marbles_y=0, side_marbles_x=0, side_marbles_angle=0, targets=false, pencil_holes=false) {
     // render(){
@@ -352,7 +352,7 @@ total_wheel_width = 19;
 wheel_thickness = 8;
 washer_thickness = 1;
 wheel_center_to_side = wheel_thickness/2 + 2 * washer_thickness + 2 * thickness;
-axe_diameter = 4.4;
+axe_diameter = 4.6;
 
 double_caster_screw_y = 5;
 
@@ -433,6 +433,11 @@ module wheel_axe() {
 }
 
 // wheel_axe();
+
+// - fit model
+// - cleaner sides
+// - notches inner sides
+// - cap slider
 
 module double_caster() {
 
@@ -874,9 +879,10 @@ module pencil_holder() {
 // xrot(90)
 // squeezer();
 
+servo9g_height = 22.7;
+
 module servo9g() {
     length = 22.5;
-    height = 22.7;
     thickness = 11.8; 
     
     head_height = 4;
@@ -885,7 +891,7 @@ module servo9g() {
     screw_holder_height = 2.5;
     screw_holder_ear = 4.7;
 
-    cuboid([length, thickness, height], anchor=BOTTOM);
+    cuboid([length, thickness, servo9g_height], anchor=BOTTOM);
 
     up(screw_holder_y)
     cuboid([length+2*screw_holder_ear, thickness, screw_holder_height], anchor=BOTTOM);
@@ -940,8 +946,15 @@ module servo_gears(position=0, two_d=false) {
         rack(pitch=pitch, teeth=rack_n_teeth, thickness=thickness, height=rack_height, helical=helical);
 
         // up(pr) yrot(180.0-$t*360/gear_n_teeth)
+        up(5)
         up(two_d ? pr + 2 : pr) yrot(-180 * rack_x / pr / PI)
-        spur_gear(pitch=pitch, teeth=gear_n_teeth, thickness=thickness, helical=helical, shaft_diam=5, orient=BACK);
+        difference() {
+            spur_gear(pitch=pitch, teeth=gear_n_teeth, thickness=thickness, helical=helical, shaft_diam=6.8, orient=BACK);
+            // right(5)
+            yrot(90)
+            prismoid([6,3], [4,3], h=8);
+            // cuboid([6, 5, 2*thickness]);
+        }
     }
 
 }
@@ -965,7 +978,7 @@ servo_dovetail_spacing = 20;
 servo_dovetail_width = 10;
 servo_n_dovetails = 2;
 
-servo_side_height = 10;
+servo_side_height = 16;
 
 module servo_holder() {
 
@@ -984,8 +997,16 @@ module servo_holder() {
             right(servo_length/2+4.7-2.3)
             cyl(l=2*thickness, r=1);
         }
+
+        // Holes for colson
+        fwd(servo_y_offset) {
+            mirror_copy(FRONT, 10)
+            cyl(l=2*thickness, r=2);
+        }
     };
 }
+
+// servo_holder();
 
 module servo_case_raw() {
     
@@ -1029,8 +1050,8 @@ module servo_case_raw_2d() {
     servo_holder();
     
     right(32)
-    fwd(2)
-    ycopies(18, 2)
+    fwd(4)
+    ycopies(servo_side_height+2*thickness+1, 2)
     xrot(90)
     servo_case_side(servo_holder_length, thickness, servo_side_height, servo_dovetail_width, servo_dovetail_spacing, servo_n_dovetails);
 }
@@ -1038,7 +1059,7 @@ module servo_case_raw_2d() {
 // servo_case_raw_2d();
 
 module servo_case() {
-    up(34)
+    up(servo_side_height + servo9g_height - thickness/2)
     xrot(180) {
         servo_case_raw();
     }
@@ -1061,7 +1082,7 @@ module body_slider(slider_width, servo_case_width, servo_case_length, slider_off
         zrot(90)
         attach(TOP) {
             xcopies(20, 2)
-            dovetail("female", angle=0, slide=thickness, width=10, height=thickness, $tags="remove");
+            dovetail("female", angle=0, slide=thickness, width=10, height=2*thickness, $tags="remove");
             xcopies(servo_case_length-2*m3_radius, 2) {
                 down(thickness/2) screw_hole();
             }
@@ -1112,19 +1133,134 @@ module magnet_blocker() {
 }
 // magnet_blocker();
 
-cap_rotating_side_width = 6;
-cap_rotating_side_height = 20;
-cap_holding_side_height = 16;
-cap_holding_side_width = 10;
-cap_holding_side_offset_y = 4;
-cap_holding_side_notch = cap_holding_side_width/2;
-cap_rotating_side_offset_y = 4;
+
+ground_to_pen_bottom = 5;
+clamp_comb_notch = 2;
+ground_to_pen_center = point88_h + ground_to_pen_bottom;
+point88_holder_height = 25;
+squeezer_body_height = gondola_height-vlink_height-arc_width-8*thickness;
+point88_body_height = point88_holder_height - ground_to_pen_center; // gondola_height-vlink_height-arc_width-13*thickness;
+
+
+// CAP HOLDER
+
 cap_height = 40;
-cap_radius = 4.5;
+cap_radius = 5;
 cap_holder_offset_y = 6;
 cap_margin = 2;
 cap_n_slice = ceil(cap_height / thickness);
 piano_string_diameter = 1;
+
+// cs1 = cap side 1 = attached to body
+
+cs2_notch_top_to_axe_bottom = 1;
+cap_axe_diameter = 3;
+cs1_h = 2 * thickness+cs2_notch_top_to_axe_bottom; // body to cap holder axe
+cs_notch = 3 * thickness;
+cs_margin = thickness;
+cs1_height = cs1_h + 3 * thickness / 2 + cap_axe_diameter / 2 + cs_margin;
+cs1_width = cs_notch;
+
+module cap_side1() {
+    axe_hole_y = -cs1_height / 2 + 3 * thickness / 2 + cs1_h;
+    translate([0, -axe_hole_y, 0])
+    union() {
+        // Vertical part
+        difference() {
+            cuboid([3 * thickness, cs1_height, thickness]);
+
+            // Axe hole
+            translate([0, axe_hole_y, 0])
+            cyl(l=2*thickness, r=cap_axe_diameter/2);
+        }
+
+        // Horizontal part, notch attached to body
+        translate([-cs1_width / 2 - 3 * thickness / 2, - cs1_height / 2 + 3 * thickness / 2, 0])
+        difference() {
+            cuboid([cs1_width, 3 * thickness, thickness]);
+            // notch
+            translate([-cs1_width/2+cs_notch/4, 0, 0])
+            cuboid([cs_notch/2, thickness, 2*thickness]);
+        }
+    }
+}
+
+// cap_side1();
+
+cs2_height = cs_notch + cs2_notch_top_to_axe_bottom + cap_axe_diameter + cs_margin;
+cs2_width = 3 * thickness;
+
+module cap_side2() {
+    axe_hole_y = -cs2_height / 2 + cs_notch + cs2_notch_top_to_axe_bottom + cap_axe_diameter / 2;
+    translate([0, -axe_hole_y, 0])
+    difference() {
+        cuboid([cs2_width, cs2_height, thickness]);
+        // Axe hole
+        translate([0, axe_hole_y, 0])
+        cyl(l=2*thickness, r=cap_axe_diameter/2);
+
+        // notch
+        translate([0, -cs2_height / 2 + cs_notch/4, 0])
+        cuboid([thickness, cs_notch/2, 2*thickness]);
+    }
+}
+
+// cap_side2();
+
+cap_ear_width = slider_offset_x-thickness/2;
+
+pen_center_to_body = point88_body_height;
+
+cap_slide_width = 2 * cap_ear_width;
+cap_slide_height = pen_center_to_body + cap_radius + cap_margin + cs1_h - cap_axe_diameter / 2 - cs2_notch_top_to_axe_bottom;
+
+module cap_slide() {
+    translate([0, -cap_slide_height / 2 - cs2_notch_top_to_axe_bottom-cap_axe_diameter/2, 0])
+    difference() {
+        cuboid([cap_slide_width, cap_slide_height, thickness]);
+
+        // Side notches
+        translate([0, cap_slide_height/2-cs_notch/4, 0])
+        mirror_copy(LEFT, cap_slide_width/2 - thickness/2)
+        cuboid([thickness, cs_notch/2, 2*thickness]);
+
+        // Cap hole
+        translate([0, -cap_slide_height/2 + cap_margin + cap_radius, 0])
+        cyl(r=cap_radius, l=2*thickness);
+    }
+}
+// cap_slide();
+
+module cap_holder2() {
+    translate([0, 0, pen_center_to_body + cs1_h])
+    xrot(90) {
+        cap_slide();
+
+        mirror_copy(LEFT, cap_slide_width/2 - thickness/2)
+        yrot(90)
+        cap_side2();
+        
+        mirror_copy(LEFT, cap_slide_width/2 + thickness/2)
+        yrot(90)
+        cap_side1();
+    }
+}
+
+
+// cap_holder2();
+
+
+
+
+cap_rotating_side_width = 3 * thickness;
+cap_axe_diameter2 = 3;
+cap_side_margin = 3;
+cap_rotating_side_height = cs_notch + cap_axe_diameter + cap_side_margin;
+cap_holding_side_h = 2 * thickness;
+cap_holding_side_height = 3 * thickness;
+cap_holding_side_width = cs_notch + 3 * thickness;;
+cap_holding_side_height2 = cap_holding_side_h + cap_holding_side_height / 2 + cap_axe_diameter / 2 + cap_side_margin;
+
 
 module main_body_plate() {
     difference() {
@@ -1139,15 +1275,18 @@ module main_body_plate() {
         }
         // Cap holder notches
         // placed at the center of the body sliders
+        fwd(body_length/2-cs_notch/2)
         mirror_copy(LEFT, slider_offset_x)
-        fwd(body_length/2-cap_holding_side_notch/2)
-        cuboid([thickness, cap_holding_side_notch, 2*thickness], anchor=BOTTOM);
+        cuboid([thickness, cs_notch, 2*thickness], anchor=BOTTOM);
+        fwd(body_length/2-thickness/2)
+        mirror_copy(LEFT, slider_offset_x-thickness)
+        cuboid([thickness, thickness, 2*thickness], anchor=BOTTOM);
     }
 }
 
 // main_body_plate();
 
-module cap_slice(hole=true, ears=false) {
+module cap_slice(hole=true) {
     difference() {
         final_cap_ear_width = 2*(cap_radius+cap_margin)+(ears?2*(cap_ear_width-cap_radius-cap_margin):0);
         cuboid([final_cap_ear_width, (cap_radius+cap_margin)*2, thickness], anchor=BOTTOM);
@@ -1157,25 +1296,34 @@ module cap_slice(hole=true, ears=false) {
         mirror_copy(LEFT, 0)
         mirror_copy(FRONT, 0)
         translate([cap_radius, cap_radius, 0])
-        cyl(l=cap_height, r=piano_string_diameter);
+        cyl(l=cap_height, r=piano_string_diameter/2);
         
-        if(ears) {
-            mirror_copy(LEFT, cap_radius+cap_margin+magnet_size/2)
-            cuboid([magnet_size, magnet_size, 2*thickness], anchor=BOTTOM);
+        // if(ears) {
+        //     mirror_copy(LEFT, cap_radius+cap_margin+magnet_size/2)
+        //     cuboid([magnet_size, magnet_size, 2*thickness], anchor=BOTTOM);
+        // }
+    }
+}
+
+module cap_holding_side() {
+    difference() {
+        union() {
+            
+            cuboid([cap_holding_side_height, cap_holding_side_width, thickness], anchor=BOTTOM);
+
+            translate([cap_holding_side_height2 / 2 - cap_holding_side_height/2, -cap_holding_side_width / 2 + 3 * thickness / 2, 0])
+            #cuboid([cap_holding_side_height2, 3 * thickness, thickness], anchor=BOTTOM);
+            
         }
-    }
-}
-
-module cap_holder_holding_sides() {
-    diff("remove") {
-        cuboid([cap_holding_side_height, cap_holding_side_width, thickness], anchor=BOTTOM);
         
-        translate([cap_holding_side_height/2 - 3*thickness/2, cap_holding_side_width/2 - cap_holding_side_notch/2, 0]) 
-        cuboid([thickness, cap_holding_side_notch, 2*thickness], anchor=BOTTOM, $tags="remove");
+        translate([0, cap_holding_side_width/2 - cs_notch/2, 0]) 
+        cuboid([thickness, cs_notch, 2*thickness]);
 
-        left(cap_holding_side_height/2-cap_holding_side_offset_y) fwd(cap_holding_side_width/2) up(thickness/2) screw_hole();
+
     }
 }
+
+// cap_holding_side();
 
 module cap_holder_rotating_sides() {
     diff("remove") {
@@ -1184,7 +1332,7 @@ module cap_holder_rotating_sides() {
     }
 }
 
-cap_ear_width = slider_offset_x-thickness/2;
+
 
 module cap() {
 
@@ -1195,21 +1343,23 @@ module cap() {
     // mirror_copy(FRONT, 0)
     ycopies(thickness, cap_n_slice)
     xrot(90)
-    cap_slice(true, $idx==0);
+    cap_slice(true);
     
     fwd(thickness * (cap_n_slice + 1)/2)
     xrot(90)
     cap_slice(false);
 }
 
+// cap();
+
 module cap_2d() {
     fwd( (cap_radius + cap_margin) * cap_n_slice)
-    left(5*cap_rotating_side_width)
+    // left(5*cap_rotating_side_width)
     ycopies(2 * (cap_radius + cap_margin) + 1, cap_n_slice)
-    cap_slice(true, $idx==3 || $idx==4);
+    cap_slice(true);
 
-    fwd(cap_rotating_side_height + (cap_radius + cap_margin))
-    left(2*cap_rotating_side_width)
+    // fwd((cap_radius + cap_margin))
+    // left(2*cap_rotating_side_width)
     cap_slice(false);
 }
 
@@ -1229,6 +1379,8 @@ module cap_holder_sides() {
     xrot(-90)
     cap_holder_rotating_sides();
 }
+
+// cap_holder_sides();
 
 module cap_holder_sides_2d() {
     right(cap_holding_side_width/2 + 4)
@@ -1301,9 +1453,8 @@ module body_2d(servo=true) {
     zrot(90)
     sliding_magnet(sliding_magnet_length, sliding_magnet_top_width, n_magnets);
 
-    // down(thickness)
-    // back(body_length/2-magnet_blocker_length/2)
-    // magnet_blocker();
+    back(body_length/2 + magnet_blocker_length/2 + 1)
+    magnet_blocker();
 }
 
 // body_2d(false);
@@ -1366,9 +1517,9 @@ module structure_3d(arcs=true, hlinks=true, vlinks=true, flasks=true, top_marble
         fwd(gondola_length/2-2*thickness)
         xrot(90)
         if(side_marbles) {
-            main_arc(marble_nut=13, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, side_marbles_angle=side_marbles_angle, pencil_holes=true);
+            main_arc(marble_nut=10, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, side_marbles_angle=side_marbles_angle, pencil_holes=true);
         } else {
-            main_arc(marble_nut=13, pencil_holes=true);
+            main_arc(marble_nut=10, pencil_holes=true);
         }
     }
 
@@ -1428,9 +1579,9 @@ module structure_2d(arcs=true, hlinks=true, vlinks=true, top_marble=true, side_m
 
         left(gondola_outer_diameter + arc_width + 5)
         if(side_marbles) {
-            main_arc_2d(marble_nut=13, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, side_marbles_angle=side_marbles_angle, pencil_holes=true);
+            main_arc_2d(marble_nut=10, side_marbles_y=side_marbles_y, side_marbles_x=side_marbles_x, side_marbles_angle=side_marbles_angle, pencil_holes=true);
         } else {
-            main_arc_2d(marble_nut=13, pencil_holes=true);
+            main_arc_2d(marble_nut=10, pencil_holes=true);
         }
     }
 
@@ -1488,20 +1639,15 @@ module clamp_comb(length, notch, clamp_comb_space_height=1, clamp_comb_space_len
 
 module point88_ensemble() {
 
-    ground_to_pen_bottom = 5;
-    clamp_comb_notch = 2;
-    point88_holder_height = 25;
-    ground_to_pen_center = point88_h+ground_to_pen_bottom;
-
     // Point 88 holder
     down(ground_to_pen_center)
     pen_holder(width=40, height=point88_holder_height, prism_width=point88_diameter, prism_base=point88_diameter / 2, prism_height=point88_h, leg_height=point88_h+ground_to_pen_bottom, comb_notch_z=12, comb_notch_size=5, elastic_notch_x=15, clamp_comb_notch=clamp_comb_notch);
 
     // Clamp comb
     // up(point88_holder_height-ground_to_pen_bottom-clamp_comb_notch-thickness)
-    up(point88_holder_height-ground_to_pen_center-2*clamp_comb_notch-thickness)
-    yrot(-90)
-    clamp_comb(pen_holder_length, 2*clamp_comb_notch, clamp_comb_space_length=25, center_notch=true, side_notches=true);
+    // up(point88_holder_height-ground_to_pen_center-2*clamp_comb_notch)
+    // yrot(-90)
+    // #clamp_comb(pen_holder_length, 2*clamp_comb_notch, clamp_comb_space_length=25, center_notch=true, side_notches=true);
 
     // Point 88
     color( rands(0,1,3), alpha=1 )
@@ -1514,27 +1660,20 @@ module point88_ensemble() {
 
 module point88_ensemble_2d() {
 
-    ground_to_pen_bottom = 5;
-    clamp_comb_notch = 2;
-    point88_holder_height = 25;
-    ground_to_pen_center = point88_h+ground_to_pen_bottom;
-
     // Point 88 holder
     down(ground_to_pen_center)
     pen_holder_2d(width=40, height=point88_holder_height, prism_width=point88_diameter, prism_base=point88_diameter / 2, prism_height=point88_h, leg_height=point88_h+ground_to_pen_bottom, comb_notch_z=12, comb_notch_size=5, elastic_notch_x=15, clamp_comb_notch=clamp_comb_notch);
 
     // Clamp comb
     // up(point88_holder_height-ground_to_pen_bottom-clamp_comb_notch-thickness)
-    fwd(80)
-    zrot(90)
-    clamp_comb(pen_holder_length, 2*clamp_comb_notch, clamp_comb_space_length=25, center_notch=true, side_notches=true);
+    // fwd(80)
+    // zrot(90)
+    // clamp_comb(pen_holder_length, 2*clamp_comb_notch, clamp_comb_space_length=25, center_notch=true, side_notches=true);
 
 }
 
 // point88_ensemble_2d();
 
-squeezer_body_height = gondola_height-vlink_height-arc_width-8*thickness;
-point88_body_height = gondola_height-vlink_height-arc_width-13*thickness;
 
 module inside_3d(type="point88") {
 
@@ -2058,8 +2197,7 @@ module tests() {
         fwd(16)
         cyl(l=2*thickness, r=m3_nut_S/2, $fn=6);
 
-        // M8 nut
-        marble_nut = 13;
+        // M6 nut
         e = marble_nut * 2 / sqrt(3);
         fwd(28)
         cyl(r=e/2, l=2*thickness, $fn=6);
@@ -2183,6 +2321,7 @@ module flat() {
 
 
 // TODO:
+
 // + normal Hlinks
 // + model pen holder for vsign
 // - test kern size and gears
@@ -2206,16 +2345,17 @@ module flat() {
 // visualization();
 
 // Shopping list
-// - M3 25mm * 8 = v & vlinks
+// - M3 20mm or 25mm? * 8 = h & vlinks
 // - M3 50mm * 4 = body to vlink
-// - M3 20mm * 4 = servo case
+// - M3 25mm * 4 = servo case
 // - M3 52mm * 1 = cap holder
 // - M3 9mm * 8 = double caster
 // - M3 12mm * 4 = hlink weigth
+// - M6 nuts * 3 = marbles
 // - piano string 1 mm = cap holder, check usefullness because there are already the casters screws
-// - solenoids
-// - marbles
-// - marble nuts: M8 nut
+// + solenoids
+// + marbles
+// + weights 200g * 2 & 100g * 2
 
 
 
@@ -2227,7 +2367,7 @@ module export_part() {
         main_arc();
     }
     if(part == "main_arc2") {
-        main_arc(marble_nut=13, pencil_holes=true);
+        main_arc(marble_nut=10, pencil_holes=true);
     }
     if(part == "hlink") {
         hlink();
@@ -2307,7 +2447,7 @@ module export_part_2d_no_render() {
         main_arc_2d();
     }
     if(part == "main_arc2") {
-        main_arc_2d(marble_nut=13, pencil_holes=true);
+        main_arc_2d(marble_nut=10, pencil_holes=true);
     }
     if(part == "hlink") {
         hlink_2d();
@@ -2484,27 +2624,31 @@ module import_cap() {
 
 module import_cap_holder() {
     fwd(body_length/2) {
-        import_cap_holder_sides();
-        down(4)
+        up(point88_body_height)
+        // import_cap_holder_sides();
+        cap_holder_sides();
         import_cap();
     }
 }
 
 module visualization_loaded() {
-    import_main_arc1();
-    import_main_arc2();
-    import_hlink();
-    import_hlink_cap();
-    import_double_caster_wing();
-    import_vlink_with_comb();
-    import_pencil_holder();
-    import_servo_case();
+    // import_main_arc1();
+    // import_main_arc2();
+    // import_hlink();
+    // import_hlink_cap();
+    // import_double_caster_wing();
+    // import_vlink_with_comb();
+    // import_pencil_holder();
+    // import_servo_case();
     import_body();
     import_point88_ensemble();
-    import_pen_wedge();
+    // import_pen_wedge();
     import_cap_holder();
 }
 
 if(command == "") {
-    visualization_loaded();
+    // visualization_loaded();
+    // import_body();
+    // cap_2d();
 }
+// servo_case();
