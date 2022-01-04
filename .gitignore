@@ -7,3 +7,4 @@ jupyter-cadquery/
 *.dxf
 *.svg
 *.step
+svg/

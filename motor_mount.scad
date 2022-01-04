@@ -30,14 +30,16 @@ $fs=0.1;
 
 thickness = 3;
 
-height = 100;
+height = 90;
 width = 50;
-body_cap_height = 40;
+body_cap_height = 50;
 
+notch_tolerance = 0.5;
 finger_hole_height = 15;
 finger_hole_width = 22;
 
-side_width = 20;
+gondola_length = 120;
+side_width = gondola_length / 2 + 30;
 side_height = 40;
 side_notch_height = 12;
 side_notch_spacing = (body_cap_height - 2.0 * side_notch_height) / 3.0;
@@ -64,30 +66,32 @@ chain_hole_height = 6;
 chain_hole_width = 3;
 chain_hole_x_dist = 20;
 
-sensor_diameter = 16;
+sensor_diameter = 12 + 1;
 
 body_cap_y = -height/2+body_cap_height/2;
 
-module side_notches() {
+module side_notches(tolerance=false) {
         mirror_copy(LEFT, side_dist_x/2)
         ycopies(side_notch_dist_y, 2)
-        cuboid([thickness, side_notch_height, 2*thickness], anchor=BOTTOM);
+        cuboid([thickness+(tolerance ? 2 * notch_tolerance : 0), side_notch_height, 2*thickness], anchor=BOTTOM);
 }
 
-module body() {
+module body(finger_hole=false) {
     difference() {
         
         // Main plate
         cuboid([width, height, thickness], anchor=BOTTOM);
 
         // Sides notches
-        fwd(body_cap_y)
+        fwd(body_cap_y - side_notch_hook/2)
         mirror_copy(LEFT, side_dist_x/2)
-        #cuboid([thickness, body_cap_height - 2 * side_notch_spacing, 2*thickness], anchor=BOTTOM);
-        
+        cuboid([thickness+2*notch_tolerance, body_cap_height - 2 * side_notch_spacing + side_notch_hook, 2*thickness], anchor=BOTTOM);
+
         // Finger hole
-        fwd(body_cap_y)
-        cuboid([finger_hole_width, finger_hole_height, 2*thickness], anchor=BOTTOM);
+        if(finger_hole) {
+            fwd(body_cap_y)
+            cuboid([finger_hole_width, finger_hole_height, 2*thickness], anchor=BOTTOM);
+        }
 
         // Top screw holes
         fwd(-height/2+screw_hole_y)
@@ -100,6 +104,8 @@ module body() {
         cyl(r=screw_hole_diameter/2, l=2*thickness);
     }
 }
+
+// body();
 
 module nema_holder() {
     difference() {
@@ -134,7 +140,7 @@ module nema_holder() {
 }
 
 
-module body_cap() {
+module body_cap(finger_hole=false) {
     difference() {
         
         // Main plate
@@ -142,10 +148,12 @@ module body_cap() {
 
         // Sides notches
         fwd(-side_notch_hook)
-        side_notches();
+        side_notches(true);
         
         // Finger hole
-        cuboid([finger_hole_width, finger_hole_height, 2*thickness], anchor=BOTTOM);
+        if(finger_hole) {
+            cuboid([finger_hole_width, finger_hole_height, 2*thickness], anchor=BOTTOM);
+        }
 
         // Screw holes
         fwd(-body_cap_height/2+screw_hole_y)
@@ -153,6 +161,9 @@ module body_cap() {
         cyl(r=screw_head_diameter/2, l=2*thickness);
     }
 }
+// fwd(body_cap_y)
+// up(thickness)
+// body_cap();
 
 sensor_holder_notch = 8;
 
@@ -166,12 +177,12 @@ module side() {
 
             // Sides notche bodies
             zrot_copies(n=2)
-            left((side_width + thickness) / 2)
+            left((side_width + thickness+notch_tolerance) / 2)
             ycopies(side_notch_dist_y, 2) {
                 fwd(side_notch_hook/2)
-                cuboid([thickness, side_notch_height - side_notch_hook, thickness], anchor=BOTTOM);
+                cuboid([thickness+notch_tolerance, side_notch_height - side_notch_hook, thickness], anchor=BOTTOM);
                 // Sides notches
-                left(thickness)
+                left(thickness+notch_tolerance/2)
                 cuboid([thickness, side_notch_height, thickness], anchor=BOTTOM);
             }
         }
@@ -182,7 +193,9 @@ module side() {
     }
 }
 
+// side();
 // sensor_diameter = 16;
+sensor_to_nema_holder = 5;
 
 module sensor_holder() {
     union() {
@@ -190,7 +203,7 @@ module sensor_holder() {
         // Main part
         difference() {
             cuboid([side_dist_x-thickness, side_width, thickness], anchor=BOTTOM);
-            // fwd(-side_width/2+sensor_diameter/2)
+            fwd(-side_width/2+sensor_diameter/2+sensor_to_nema_holder)
             cyl(r=sensor_diameter/2, l=2*thickness);
         }
 
@@ -220,65 +233,63 @@ module viz3d() {
         up(side_width/2+thickness) {
             mirror_copy(LEFT, (side_dist_x + thickness) / 2)
             yrot(90)
-            #side();
+            side();
 
             fwd(-thickness/2)
             xrot(90)
-            #sensor_holder();
+            sensor_holder();
         }
     }
     
 }
 
 
-// side();
-// viz3d();
-
 // body();
 // nema_holder();
 // body_cap();
-// #side();
-// #sensor_holder();
+// side();
+// sensor_holder();
 
 part = "";
 
 module export_part() {
-    if(part == "body") {
+    if(part == "mm_body") {
         body();
     }
-    if(part == "nema_holder") {
+    if(part == "mm_nema_holder") {
         nema_holder();
     }
-    if(part == "body_cap") {
+    if(part == "mm_body_cap") {
         body_cap();
     }
-    if(part == "side") {
+    if(part == "mm_side") {
         side();
     }
-    if(part == "sensor_holder") {
+    if(part == "mm_sensor_holder") {
         sensor_holder();
     }
 }
 
-// part = "side";
+// part = "mm_side";
 module export_part_2d_no_render() {
-    if(part == "body") {
+    if(part == "mm_body") {
         body();
     }
-    if(part == "nema_holder") {
+    if(part == "mm_nema_holder") {
         nema_holder();
     }
-    if(part == "body_cap") {
+    if(part == "mm_body_cap") {
         body_cap();
     }
-    if(part == "side") {
-        mirror_copy(LEFT, (side_width+4*thickness+1)/2)
+    if(part == "mm_side") {
+        mirror_copy(LEFT, (side_width+4*(thickness+notch_tolerance)+1)/2)
         side();
     }
-    if(part == "sensor_holder") {
+    if(part == "mm_sensor_holder") {
         sensor_holder();
     }
 }
+
 // export_part_2d_no_render();
 kerf_width = 0.2;
 
@@ -308,4 +319,6 @@ module export_command() {
 }
 
 export_command();
-// viz3d();
+if(command == "") {
+    viz3d();
+}

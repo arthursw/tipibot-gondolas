@@ -8,7 +8,7 @@ args = parser.parse_args()
 
 # parts = ['double-caster', 'structure', 'inside']
 
-parts = ['nema', 'weight']
+parts = ['p_nema', 'p_weight', 'p_waffle']
 
 export_command = args.type
 

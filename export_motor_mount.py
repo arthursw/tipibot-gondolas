@@ -8,7 +8,7 @@ args = parser.parse_args()
 
 # parts = ['double-caster', 'structure', 'inside']
 
-parts = ['body', 'nema_holder', 'body_cap', 'side', 'sensor_holder']
+parts = ['mm_body', 'mm_nema_holder', 'mm_body_cap', 'mm_side', 'mm_sensor_holder']
 
 export_command = args.type
 

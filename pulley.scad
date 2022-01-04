@@ -47,7 +47,7 @@ pulley_radius = pulley_perimeter / (2 * PI);
 pulley_chain_radius = pulley_radius - chain_thickness / 2;
 pulley_outer_radius = pulley_radius + bead_diameter / 4;
 
-module nema17_axe(axe_diameter) {
+module nema17_axe(axe_diameter=-1) {
     if(axe_diameter<0) {
         nema17_axe_diameter = 5;
         back_half(y=-4/2)
@@ -63,6 +63,15 @@ module bead() {
     prismoid(size1=[bead_diameter, 2*thickness], size2=[3*bead_diameter, 2*thickness], h=bead_diameter);
     // cuboid([bead_diameter, bead_diameter, 2*thickness]);
 }
+
+module waffle_nema17() {
+    difference() {
+        cyl(r=10, h=thickness);
+        nema17_axe();
+    }
+}
+
+// waffle_nema17();
 
 // bead();
 module pulley_middle(axe_diameter=-1) {
@@ -121,11 +130,14 @@ module export_part() {
 part = "";
 
 module export_part_2d_no_render() {
-    if(part == "nema") {
+    if(part == "p_nema") {
         pulley_2D();
     }
-    if(part == "weight") {
+    if(part == "p_weight") {
         pulley_2D(3);
+    }
+    if(part == "p_waffle") {
+        waffle_nema17();
     }
 }
 
