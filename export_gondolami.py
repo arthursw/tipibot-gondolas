@@ -1,9 +1,7 @@
 import subprocess
 from pathlib import Path
 import argparse
-
-
-
+import itertools
 
 # main_arc1 main_arc2 hlink hlink_cap sliding_vlink sliding_hlink_top sliding_hlink_bottom double_caster wing vlink_with_comb servo_case body point88_ensemble cap_holder cap wheel
 # p_nema p_weight p_waffle
@@ -14,20 +12,22 @@ models = {
 'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder', 'cap', 'pulley', 'wheel', 'bearing_wheel'],
     # 'gondolami': ['main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'double_caster', 'wing', 'vlink_with_comb', 'servo_case', 'body', 'point88_ensemble', 'cap_holder', 'cap'],
     'pulley': ['p_nema', 'p_weight', 'p_waffle'],
-    'motor_mount': ['mm_body', 'mm_nema_holder', 'mm_body_cap', 'mm_side', 'mm_sensor_holder']
+    'motor_mount': ['mm_body', 'mm_nema_holder', 'mm_body_cap', 'mm_side', 'mm_sensor_holder'],
+    'ground_station': ['gs_case_main', 'gs_case_wall_motor', 'gs_case_wall_cap', 'gs_case_wall_end', 'gs_case_side', 'gs_nema17_stepper', 'gs_bulldozer', 'gs_bulldozer_spacer', 'gs_pen_with_attachment', 'gs_axe_and_guides', 'gs_pen_holder', 'gs_pen_cap_plate']
 }
 
 all_parts = models['gondolami'] + models['pulley'] + models['motor_mount']
+all_models = list(models.keys())
 
 parser = argparse.ArgumentParser(description='Export Gondolami.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-t', '--type', type=str, help='Export type', default='3d', choices=['3d', '2d'])
-parser.add_argument('-p', '--parts', help='Parts (default export all parts).', default=[], nargs='+', choices=all_parts)
+parser.add_argument('-p', '--parts', help='Parts (default exports all parts).', default=[], nargs='+', choices=all_parts)
+parser.add_argument('-m', '--models', help='(Optional) Shortcut to export all parts of the given models.', default=[], nargs='+', choices=all_models)
 parser.add_argument('-kw', '--kerf_widths', help='Kerf widths', default=[0.1, 0.2], nargs='+', type=float)
 parser.add_argument('-gl', '--gondola_lengths', help='Gondola length', default=[120], nargs='+', type=float)
 args = parser.parse_args()
 
-parts = args.parts if len(args.parts) > 0 else all_parts
-
+parts = args.parts if len(args.parts) > 0 else (list(itertools.chain.from_iterable([models[model] for model in args.models])) if args.models else all_parts)
 export_command = args.type
 
 file_format = 'stl' if export_command == '3d' else 'svg'

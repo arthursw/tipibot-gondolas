@@ -4,6 +4,7 @@ include <BOSL2/screws.scad>
 include <BOSL2/std.scad>
 include <BOSL2/joiners.scad>
 include <BOSL2/gears.scad>
+include <BOSL2/nema_steppers.scad>
 
 // All dimensions are from outer ends (i.e. width = from outer left to outer right)
 // except when specified differently
@@ -39,14 +40,14 @@ finger_hole_height = 15;
 finger_hole_width = 22;
 
 gondola_length = 120;
-side_width = gondola_length / 2 + 30;
+side_width = gondola_length / 2 + 22.5;
 side_height = 40;
 side_notch_height = 12;
 side_notch_spacing = (body_cap_height - 2.0 * side_notch_height) / 3.0;
 
 side_notch_dist_y = side_notch_height + side_notch_spacing;
 side_notch_hook = 4;
-side_dist_x = 40;
+side_dist_x = 38;
 
 nema_hole_diameter = 24;
 nema_hole_y = width/2 - 5;
@@ -73,7 +74,7 @@ body_cap_y = -height/2+body_cap_height/2;
 module side_notches(tolerance=false) {
         mirror_copy(LEFT, side_dist_x/2)
         ycopies(side_notch_dist_y, 2)
-        cuboid([thickness+(tolerance ? 2 * notch_tolerance : 0), side_notch_height, 2*thickness], anchor=BOTTOM);
+        cuboid([2*thickness+(tolerance ? 2 * notch_tolerance : 0), side_notch_height, 2*thickness], anchor=BOTTOM);
 }
 
 module body(finger_hole=false) {
@@ -85,7 +86,7 @@ module body(finger_hole=false) {
         // Sides notches
         fwd(body_cap_y - side_notch_hook/2)
         mirror_copy(LEFT, side_dist_x/2)
-        cuboid([thickness+2*notch_tolerance, body_cap_height - 2 * side_notch_spacing + side_notch_hook, 2*thickness], anchor=BOTTOM);
+        cuboid([2*thickness+2*notch_tolerance, body_cap_height - 2 * side_notch_spacing + side_notch_hook, 2*thickness], anchor=BOTTOM);
 
         // Finger hole
         if(finger_hole) {
@@ -119,10 +120,13 @@ module nema_holder() {
         
         // Nema
         fwd(height/2-nema_hole_y) {
-            cyl(r=nema_hole_diameter/2, l=2*thickness);
-            mirror_copy(LEFT, nema_screw_dist/2)
-            mirror_copy(FRONT, nema_screw_dist/2)
-            cyl(r=nema_screw_diameter/2, l=2*thickness);
+
+            nema_mount_holes(size=17, depth=3*thickness, l=0);
+
+            // #cyl(r=nema_hole_diameter/2, l=2*thickness);
+            // mirror_copy(LEFT, nema_screw_dist/2)
+            // mirror_copy(FRONT, nema_screw_dist/2)
+            // #cyl(r=nema_screw_diameter/2, l=2*thickness);
             
             fwd(nema_hole_y/2+1)
             cuboid([nema_notch, nema_hole_y, 2*thickness], anchor=BOTTOM);
@@ -202,7 +206,7 @@ module sensor_holder() {
         
         // Main part
         difference() {
-            cuboid([side_dist_x-thickness, side_width, thickness], anchor=BOTTOM);
+            cuboid([side_dist_x-2*thickness, side_width, thickness], anchor=BOTTOM);
             fwd(-side_width/2+sensor_diameter/2+sensor_to_nema_holder)
             cyl(r=sensor_diameter/2, l=2*thickness);
         }
@@ -210,7 +214,7 @@ module sensor_holder() {
         // Side male notches
         fwd(side_width/2-sensor_holder_notch/2)
         mirror_copy(LEFT, side_dist_x/2)
-        cuboid([thickness, sensor_holder_notch, thickness], anchor=BOTTOM);
+        cuboid([2*thickness, sensor_holder_notch, thickness], anchor=BOTTOM);
 
         // Top male notch
         fwd(-side_width/2-thickness/2)
@@ -233,7 +237,12 @@ module viz3d() {
         up(side_width/2+thickness) {
             mirror_copy(LEFT, (side_dist_x + thickness) / 2)
             yrot(90)
-            side();
+            {
+                up(-thickness/2)
+                side();
+                up(thickness/2)
+                side();
+            }
 
             fwd(-thickness/2)
             xrot(90)
