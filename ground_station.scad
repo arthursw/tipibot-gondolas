@@ -7,27 +7,14 @@ include <BOSL2/gears.scad>
 include <BOSL2/nema_steppers.scad>
 include <BOSL2/rounding.scad>
 
-// All dimensions are from outer ends (i.e. width = from outer left to outer right)
-// except when specified differently
+include <parameters.scad>
+include <pen_holder.scad>
 
-// Hexagon: https://fr.wikipedia.org/wiki/Hexagone
-// h = side * sqrt(3) / 2 = small radius
-// r = side = large radius
-
-function hexagon_h_to_r(h) = h * 2 / sqrt(3);
-function hexagon_r_to_h(r) = r * sqrt(3) / 2;
 
 $fa=2;
 $fs=2;
 
 nema17_width = nema_motor_width(17);
-thickness = 3;
-
-pen_diameter = 15;
-pen_length = 112;
-pen_cap_length = 29;
-pen_cap_diameter = 14;
-
 
 pushing_plate_width = 30;
 cable_clamp_thickness = 3;
@@ -48,11 +35,10 @@ t8_lead_screw_offset = 8;
 bulldozer_t8_margin = 1;
 
 pen_nsides = 0;
-pen_holder_width = 50;
 pen_to_bearing_margin = 3;
-ground_to_pen_center = nema17_width/2 + 2*thickness + pen_diameter/2 + t8_lead_big_diameter/2 + pen_to_bearing_margin;
-echo("ground_to_pen_center:", ground_to_pen_center);
-pen_holder_height = ground_to_pen_center + 20;
+gs_ground_to_pen_center = nema17_width/2 + 2*thickness + pen_diameter/2 + t8_lead_big_diameter/2 + pen_to_bearing_margin;
+echo("gs_ground_to_pen_center:", gs_ground_to_pen_center);
+pen_holder_height = gs_ground_to_pen_center + 20;
 sliding_magnet_width = 15;
 comb_notch = 5;
 // case_width = 140;
@@ -60,7 +46,7 @@ case_width = 90;
 nema17_depth = 30;
 axe_length = 100;
 case_length = nema17_depth + axe_length + landing_length;
-
+echo("case_length: ", case_length+20);
 case_side_void_h = 20;
 case_side_chamfer = 40;
 case_side_height = nema17_width + 2*thickness;
@@ -68,17 +54,12 @@ case_cap_notch_width = 15;
 case_side_bottom_notch_length = 30;
 
 bearing_diameter = 22;
-linear_bearings_spacing = 40;
+linear_bearings_spacing = 45;
 
 linear_bearings_outer_diameter = 15;
 linear_bearings_inner_diameter = 8;
 linear_bearings_length = 24;
-linear_bearings_y_offset = 10;
 case_hole_margin = 12;
-
-axe_y = nema17_width/2 + 2*thickness;
-pen_holder_y = axe_y - linear_bearings_y_offset + linear_bearings_inner_diameter/2;
-pen_y = ground_to_pen_center + pen_holder_y;
 
 bulldozer_margin = 1;
 bulldozer_width = case_width-4*thickness-2*bulldozer_margin;
@@ -116,10 +97,10 @@ module pen_cap_plate() {
 
 module pen_with_attachment() {
     pen();
-    up(pen_length-4*thickness)
+    up(pen_length-2*thickness)
     pen_attachment();
 
-    up(pen_length+2*thickness)
+    up(pen_length+4*thickness)
     pen_cap_plate();
     // pen_attachment();
 }
@@ -460,8 +441,8 @@ module import_case() {
     up(2*thickness)
     zcopies(thickness, 2)
     zcopies(4*thickness, 2)
-    case_wall($idx==0, pen_print=true);
-    // import_part($idx==0 ? "gs_case_wall_cap" : "gs_case_wall_end");
+    // case_wall($idx==0, pen_print=true);
+    import_part($idx==0 ? "gs_case_wall_cap" : "gs_case_wall_end");
 
     // Sides
     mirror_copy(LEFT, case_width/2)
@@ -488,9 +469,7 @@ module axe_and_guides() {
     xrot(90){
         // T8 screw
         cyl(d=8, h=axe_length);
-
         // Guides
-        fwd(linear_bearings_y_offset)
         mirror_copy(LEFT, linear_bearings_spacing/2)
         cyl(d=linear_bearings_inner_diameter, h=axe_length);
     }
@@ -510,72 +489,9 @@ module axe_and_guides() {
         }
 
         // Linear bearings
-        fwd(linear_bearings_y_offset)
         mirror_copy(LEFT, linear_bearings_spacing/2)
         tube(od=linear_bearings_outer_diameter, id=linear_bearings_inner_diameter, h=linear_bearings_length);
     }
-}
-
-pen_holder_legs_spacing_x_margin = 2;
-pen_holder_legs_spacing_x = t8_lead_big_diameter + 2 * pen_holder_legs_spacing_x_margin;
-
-module pen_holder_bridge(pen_diameter = pen_diameter, pen_nsides=0) {
-
-    translate([0, pen_holder_height/2, 0])
-    difference() {
-        cuboid([pen_holder_width, pen_holder_height, thickness]);
-
-        // Legs hole
-        translate([0, -pen_holder_height/2+ground_to_pen_center/2, 0])
-        cuboid([pen_holder_legs_spacing_x, ground_to_pen_center, 2*thickness]);
-        // prismoid(size1=[35,50], size2=[20,30], h=ground_to_pen_center);
-
-        // Pen hole
-        translate([0, -pen_holder_height/2+ground_to_pen_center, 0])
-        cyl(r=pen_diameter/2, l=2*thickness, $fn=pen_nsides > 0 ? pen_nsides : $fn);
-
-        // Center notch
-        translate([0, pen_holder_height/2 - thickness/2, 0])
-        cuboid([sliding_magnet_width, thickness, 2*thickness]);
-
-        // Side notches
-        translate([0, -pen_holder_height/2+ground_to_pen_center, 0])
-        mirror_copy(LEFT, pen_holder_width/2-thickness/2)
-        cuboid([thickness, comb_notch, 2*thickness]);
-    }
-}
-
-pen_holder_bridge();
-
-// Pen holder legs and pen attachment must be separated because 
-
-pen_holder_legs_spacing_y = 30;
-magnet_spacing = 10;
-magnet_size = 3;
-n_magnets = 4;
-
-pen_holder_length = pen_length;
-
-module sliding_magnet(length, width, n_magnets, notches=false) {
-    difference() {
-        cuboid([notches ? width + 2 * thickness : width, length, thickness], anchor=BOTTOM);
-        ycopies(magnet_spacing, n_magnets)
-        cuboid([magnet_size, magnet_size, magnet_size], anchor=BOTTOM);
-        if(notches) {
-            mirror_copy(LEFT, width / 2 + thickness / 2)
-            ycopies(2 * thickness, floor(0.5 * length / thickness))
-            cuboid([thickness, thickness, thickness], anchor=BOTTOM);
-        }
-    }
-}
-
-module pen_holder(pen_diameter=pen_diameter, pen_nsides=0) {
-    up(pen_holder_height-thickness)
-    sliding_magnet(pen_holder_length, sliding_magnet_width, n_magnets, notches=true);
-
-    ycopies(pen_holder_legs_spacing_y, 2)
-    xrot(90)
-    pen_holder_bridge();
 }
 
 
@@ -598,23 +514,22 @@ module pen_holder(pen_diameter=pen_diameter, pen_nsides=0) {
 //     }
 
 //     fwd(case_length/2-pen_length-landing_length)
-//     up(ground_to_pen_center)
+//     up(gs_ground_to_pen_center)
 //     xrot(90)
 //     pen_with_attachment();
 // }
 
 // visualization();
-gondola_length = 120;
 
 module import_part(name) {
     color( rands(0,1,3), alpha=1 )
-    import(str("ground_station_parts_length", gondola_length, "_3d/", name, ".stl"));
+    import(str("exports/ground_station_parts_length", gondola_length, "_3d/", name, ".stl"));
 }
 
 module load_visualization() {
     up(2*thickness + nema17_width/2)
-    axe_and_guides();
-    // import_part("gs_axe_and_guides");
+    // axe_and_guides();
+    import_part("gs_axe_and_guides");
 
     import_case();
 
@@ -631,14 +546,14 @@ module load_visualization() {
         import_part("gs_bulldozer_spacer");
     }
 
-    fwd(case_length/2-landing_length-pen_length)
-    up(pen_y)
-    xrot(90)
+    fwd(case_length/2-landing_length+pen_length)
+    up(gs_ground_to_pen_center)
+    xrot(-90)
     pen_with_attachment();
     // import_part("gs_pen_with_attachment");
 
     // left(linear_bearings_spacing/2)
-    up(pen_holder_y)
+    fwd(case_length/2+18)
     pen_holder();
     // import_part("gs_pen_holder");
 }
@@ -726,5 +641,3 @@ if(command == "") {
 
 // - Magnets plate
 // - Set height
-
-// - ! Add a third spacer in bulldozer and other cap / pen "clamp"

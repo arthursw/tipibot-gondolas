@@ -4,6 +4,8 @@ include <BOSL2/screws.scad>
 include <BOSL2/std.scad>
 include <BOSL2/joiners.scad>
 include <BOSL2/gears.scad>
+include <parameters.scad>
+// include <ground_station.scad>
 
 // All dimensions are from outer ends (i.e. width = from outer left to outer right)
 // except when specified differently
@@ -28,9 +30,6 @@ $fs=2;
 
 // => 95 sides
 
-thickness = 3;
-
-gondola_length = 120;
 gondola_outer_diameter = 200; // this is the total arc height ; the rail is rail_width bellow, the inner radius is gondola_outer_diameter - arc_width
 arc_width = 20;
 rail_depth = 5;
@@ -43,8 +42,6 @@ holder_spacing = gondola_length - 4 * thickness - 2 * holder_margin;
 holder_length = holder_spacing + 2 * thickness;
 pen_holder_width = 35;
 holder_height = 50;
-
-body_length = gondola_length - 6 * thickness;
 
 wheel_diameter = 13; // 20;
 
@@ -101,7 +98,6 @@ bottom_hlinks_y = -arc_bottom_height + sliding_vlink_bottom_margin;
 
 weight_sliding_dist = 100;
 
-magnet_blocker_length = 15;
 
 squeezer_holder_height = 55;
 squeezer_holder_y = -25;
@@ -868,7 +864,6 @@ module comb(length, notch, width = -1) {
 
 // comb(squeezer_length, notch, 30);
 
-blocker_margin = 5;
 sliding_magnet_width = 10;
 
 // module pen_holder_bridge(width=pen_holder_width, height=holder_height, length=170, prism_width=50, prism_height=30, prism_base=0, comb_notch_z=3*thickness, center_notch=sliding_magnet_width, side_notches=-1, leg_height=10, elastic_notch_x=-1, elastic_notch_size=-1, clamp_comb_notch=-1) {
@@ -913,15 +908,11 @@ sliding_magnet_width = 10;
 //         }
 // }
 // pen_holder_bridge(side_notches=8, clamp_comb_notch=4);
-pen_holder_length = body_length - magnet_blocker_length - blocker_margin;
-
-body_z = 20;
-pen_holder_height = ground_to_pen_center + body_z;
 
 comb_notch = 2 * thickness;
 pen_holder_legs_spacing = 12 * thickness;
 
-pen_diameter = 12; // 11 but 12 for margins
+// pen_diameter = 12; // 11 but 12 for margins
 
 module pen_holder_bridge(pen_diameter = pen_diameter, pen_nsides=0) {
 
@@ -2958,7 +2949,7 @@ export_command();
 
 module import_part(name) {
     color( rands(0,1,3), alpha=1 )
-    import(str("gondolami_parts_length", gondola_length, "_3d/", name, ".stl"));
+    import(str("exports/gondolami_parts_length", gondola_length, "_3d/", name, ".stl"));
 }
 
 module import_main_arc1() {
@@ -3100,12 +3091,12 @@ module import_cap_ensemble() {
 }
 
 module visualization_loaded() {
-    // import_main_arc1();
-    // import_main_arc2();
-	// import_hlink_ensemble();
-	// import_double_caster_wing();
-    // import_vlink_with_comb();
-    // import_servo_case();
+    import_main_arc1();
+    import_main_arc2();
+	import_hlink_ensemble();
+	import_double_caster_wing();
+    import_vlink_with_comb();
+    import_servo_case();
     import_body();
     import_point88_ensemble();
     // import_cap_ensemble();
@@ -3139,5 +3130,4 @@ if(command == "") {
 
 // structure_3d(arcs=true, hlinks=true, vlinks=true, flasks=false, top_marble=false, side_marbles=false, pencil_holders=false, pencils=false);
 
-// FR76 4255 9100 0008 0131 6676 469
 

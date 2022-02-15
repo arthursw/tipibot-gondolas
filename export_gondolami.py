@@ -40,6 +40,8 @@ def get_model_for_part(part):
         if part in models[m]: return m
     return
 
+export_folder = Path('export')
+
 for kerf_width in kerf_widths:
     print(f'kerf_width {kerf_width}')
     for gondola_length in args.gondola_lengths:
@@ -47,7 +49,7 @@ for kerf_width in kerf_widths:
         for part in parts:
             kerf_string = f'_kerf{kerf_width}' if export_command == '2d' else ''
             model = get_model_for_part(part)
-            output_folder = Path(f'{model}_parts_length{gondola_length}{kerf_string}_{export_command}')
+            output_folder = export_folder / f'{model}_parts_length{gondola_length}{kerf_string}_{export_command}'
             output_folder.mkdir(exist_ok=True)
             # filename = f'{part}_length{gondola_length}.stl'
             print(f'   Export {model} {part}...')

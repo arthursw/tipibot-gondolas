@@ -8,3 +8,5 @@ jupyter-cadquery/
 *.svg
 *.step
 svg/
+research/
+exports/
