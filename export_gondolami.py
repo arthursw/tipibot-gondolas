@@ -9,15 +9,17 @@ import itertools
 
 models = {
     'gondolami': ['kerf_test', 'tests', 'main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'sliding_vlink', 'sliding_hlink_top', 'sliding_hlink_bottom', 'double_caster', 'wing', 'vlink_with_comb', 
-'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder', 'cap', 'pulley', 'wheel', 'bearing_wheel'],
+'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder', 'cap', 'pulley', 'wheel', 'bearing_wheel', 'marble'],
     # 'gondolami': ['main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'double_caster', 'wing', 'vlink_with_comb', 'servo_case', 'body', 'point88_ensemble', 'cap_holder', 'cap'],
     'pulley': ['p_nema', 'p_weight', 'p_waffle'],
     'motor_mount': ['mm_body', 'mm_nema_holder', 'mm_body_cap', 'mm_side', 'mm_sensor_holder'],
     'ground_station': ['gs_case_main', 'gs_case_wall_motor', 'gs_case_wall_cap', 'gs_case_wall_end', 'gs_case_side', 'gs_nema17_stepper', 'gs_bulldozer', 'gs_bulldozer_spacer', 'gs_pen_with_attachment', 'gs_axe_and_guides', 'gs_pen_holder', 'gs_pen_cap_plate']
 }
 
-all_parts = models['gondolami'] + models['pulley'] + models['motor_mount']
 all_models = list(models.keys())
+all_parts = [models[m] for m in all_models]
+all_parts = [part for parts in all_parts for part in parts]
+
 
 parser = argparse.ArgumentParser(description='Export Gondolami.', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('-t', '--type', type=str, help='Export type', default='3d', choices=['3d', '2d'])
@@ -40,7 +42,7 @@ def get_model_for_part(part):
         if part in models[m]: return m
     return
 
-export_folder = Path('export')
+export_folder = Path('exports')
 
 for kerf_width in kerf_widths:
     print(f'kerf_width {kerf_width}')
@@ -49,12 +51,13 @@ for kerf_width in kerf_widths:
         for part in parts:
             kerf_string = f'_kerf{kerf_width}' if export_command == '2d' else ''
             model = get_model_for_part(part)
+            command_suffix = '_gs' if model == 'ground_station' else ''
             output_folder = export_folder / f'{model}_parts_length{gondola_length}{kerf_string}_{export_command}'
             output_folder.mkdir(exist_ok=True)
             # filename = f'{part}_length{gondola_length}.stl'
             print(f'   Export {model} {part}...')
             filename = output_folder / f'{part}.{file_format}'
             command = ['/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD', f'-o{str(filename)}']
-            command += [f'-Dgondola_length={gondola_length}', f'-Dcommand="{export_command}"']
+            command += [f'-Dgondola_length={gondola_length}', f'-Dcommand{command_suffix}="{export_command}"']
             command += [f'-Dpart="{part}"', f'-Dkerf_width={kerf_width}', f'{model}.scad']
             subprocess.run(command)
