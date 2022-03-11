@@ -28,6 +28,9 @@ $fs=1;
 
 // => 95 sides
 
+
+gondola_length = 120;
+
 thickness = 4;
 
 m3_diameter = 3;
@@ -54,10 +57,10 @@ pulley_radius = pulley_perimeter / (2 * PI);
 pulley_chain_radius = pulley_radius - chain_thickness / 2;
 pulley_outer_radius = pulley_radius + bead_diameter / 2;
 
-weight_head_height = 5;
-weight_neck_radius = 16/2;
-weight_radius = 25/2;
-weight_body_height = 40;
+weight_head_height = 6;
+weight_neck_radius = 20/2;
+weight_radius = 28/2;
+weight_body_height = 35;
 weight_height = weight_body_height + 2 * weight_head_height;
 
 weight_holder_width = 25;
@@ -160,7 +163,7 @@ module weight_holder() {
 
 module weight_holder_v2() {
     zrot(180)
-    mirror_copy(FRONT, 3*thickness/2+thickness)
+    mirror_copy(FRONT, weight_neck_radius) // 3*thickness/2+thickness)
     xrot(90)
     weight_holder_side_v2();
 }
@@ -177,10 +180,10 @@ module top_link() {
 
 module link_v2() {
     difference() {
-        cuboid([weight_holder_width, 9*thickness, thickness], anchor=BOTTOM);
+        cuboid([weight_holder_width, 2 * weight_radius + 2*thickness, thickness], anchor=BOTTOM);
         
         left(weight_holder_width/4)
-        mirror_copy(FRONT, 3*thickness)
+        mirror_copy(FRONT, weight_radius-thickness/2)
         cuboid([weight_holder_width/2, thickness, 2*thickness], anchor=BOTTOM);
     }
 }
@@ -226,5 +229,79 @@ module viz3d_v2() {
     link_v2();
 }
 
+module export_2d_v1() {
+    head_holder();
+
+    back(weight_holder_height)
+    xcopies(weight_holder_width+1, 2)
+    weight_holder_side();
+
+    fwd(weight_holder_height-10)
+    top_link();
+}
+module export_2d_v2() {
+    xcopies(weight_holder_width+1, 2)
+    weight_holder_side_v2();
+    fwd(weight_holder_height)
+    xcopies(weight_holder_width+1, 2)
+    link_v2();
+}
+
+module export_part_2d_no_render() {
+    if(part == "weight_v1") {
+        export_2d_v1();
+    }
+    if(part == "weight_v2") {
+        export_2d_v2();
+    }
+}
+
+kerf_width = 0.2;
+
+module export_part_2d() {
+    $fa=1;
+    $fs=0.5;
+    render() {
+        offset(delta=kerf_width/2) {
+            projection() {
+                export_part_2d_no_render();
+            }
+        }
+    }
+}
+module export_part(part=part) {
+    if(part == "weight_v1") {
+        viz3d_v1();
+    }
+    if(part == "weight_v2") {
+        viz3d_v2();
+    }
+}
+
+command = "";
+
+module export_command() {
+    if(command == "3d") {
+        export_part();
+    }
+    if(command == "2d") {
+        export_part_2d();
+    }
+}
+
+export_command();
+
+module import_part(name) {
+    color( rands(0,1,3), alpha=1 )
+    import(str("exports/weight_parts_length", gondola_length, "_3d/", name, ".stl"));
+}
+
+if(command == "") {
+    import_part("weight_v2");
+}
+
+// export_2d_v1();
+// export_2d_v2();
 // top_link();
-viz3d_v2();
+// viz3d_v1();
+// viz3d_v2();
