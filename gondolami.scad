@@ -285,9 +285,12 @@ module long_link2(length=link_length, arc_width=arc_width) {
         // };
         attach([FRONT, BACK], overlap=0) up(thickness) screw_notch(link_screw_length);
 
-        ycopies(length-thickness, 2)
-        translate([arc_width/2-thickness/2, 0, thickness/2])
-        cuboid([thickness, thickness, 2*thickness], $tags="screw");
+        // Wheel spacing
+        xcopies(arc_width-thickness, 2)
+        ycopies(length-2*thickness, 2)
+        // translate([arc_width/2-thickness/2, 0, thickness/2])
+        translate([0, 0, thickness/2])
+        cuboid([thickness, 2*thickness, 2*thickness], $tags="screw");
     };
 }
 
@@ -524,10 +527,10 @@ module bearing_wheel_2d(wheel_rail_depth=wheel_rail_depth) {
 interval_between_wheels = arc_width + wheel_diameter - 2 * wheel_rail_depth;
 top_wheel_top_to_double_caster_top = 30;
 double_caster_height = interval_between_wheels + wheel_diameter + top_wheel_top_to_double_caster_top; // == total double caster height
-total_wheel_width = 19;
+total_wheel_width = 19-2.5;
 wheel_thickness = 9;
 washer_thickness = 1;
-wheel_center_to_side = wheel_thickness/2 + 2 * washer_thickness + 2 * thickness + thickness;
+wheel_center_to_side = wheel_thickness/2 + 2 * washer_thickness + 2 * thickness + thickness - 2.5;
 
 double_caster_screw_y = 5;
 
@@ -820,7 +823,7 @@ module vlink(length=link_length, arc_width=arc_width) {
             long_link2(length, arc_width=arc_width);
             right(arc_width/2+vlink_height/2)
             cuboid([vlink_height, body_length, thickness], anchor=BOTTOM) {
-                attach(RIGHT) xcopies(length-6*thickness, 2) screw_notch(link_screw_length-5, 2);
+                attach(RIGHT) xcopies(length-10*thickness, 2) screw_notch(link_screw_length-5, 2);
             };
 
             n_notches = ceil((total_height / thickness) / 2);
@@ -834,6 +837,10 @@ module vlink(length=link_length, arc_width=arc_width) {
                 back(2*thickness)
                 cuboid([thickness, thickness, 2*thickness], $tags="screw");
             }
+
+            translate([arc_width/2 + vlink_height/2-thickness/2, 0, thickness/2])
+            ycopies(body_length-2*thickness, 2)
+            cuboid([vlink_height+thickness, 2*thickness, 2*thickness], $tags="screw");
         }
     }
 }
@@ -868,19 +875,19 @@ module vlink_with_comb_2d(length=link_length, arc_width=arc_width) {
 // vlink_with_comb_2d();
 
 // Comb
-module comb(length, notch, width = -1) {
-    width = width < 0 ? 2 * notch : width;
+// module comb(length, notch, width = -1) {
+//     width = width < 0 ? 2 * notch : width;
 
-    n_notches = floor((length / thickness) / 2);
-    notches_length = n_notches * 2 * thickness;
-    difference() {
-        cuboid([width, length, thickness]);
+//     n_notches = floor((length / thickness) / 2);
+//     notches_length = n_notches * 2 * thickness;
+//     difference() {
+//         cuboid([width, length, thickness]);
         
-        left(width/2-notch/2)
-        ycopies(notches_length/n_notches, n_notches) 
-        cuboid([notch, thickness, thickness]);
-    }
-}
+//         left(width/2-notch/2)
+//         ycopies(notches_length/n_notches, n_notches) 
+//         cuboid([notch, thickness, thickness]);
+//     }
+// }
 
 // comb(squeezer_length, notch, 30);
 
@@ -1319,7 +1326,7 @@ module body_slider(slider_width, servo_case_width, servo_case_length, slider_off
         }
 
         
-        position(LEFT) right(m3_radius) mirror_copy(FRONT, (body_length-4*thickness) / 2) {
+        position(LEFT) right(m3_radius) mirror_copy(FRONT, (body_length-8*thickness) / 2) {
             screw_hole();
         };
     }
@@ -1360,7 +1367,7 @@ module magnet_blocker() {
     diff("remove") {
         cuboid([body_width, magnet_blocker_length, thickness], anchor=BOTTOM);
         
-        back(magnet_blocker_length/2-2*thickness)
+        back(magnet_blocker_length/2-4*thickness)
         mirror_copy(LEFT, body_width/2-m3_radius)
         up(thickness/2)
         screw_hole();
@@ -3042,21 +3049,13 @@ if(command == "") {
 
 // structure_3d(arcs=true, hlinks=true, vlinks=true, flasks=false, top_marble=false, side_marbles=false, pencil_holders=false, pencils=false);
 
-
-// - list nuts & bolts
 // - new links: add wheel margin to links
-// - simulate pen drop wall ditance
-// - remove cap holder notches from body
-// - increase body length?
 
-// - define wall_to_center
-// - deduce marble length
-// - set ground_station on wall
-// - unfreeze body
-// - compute (gear) rack length
-// - rectify servo position
-// - add notches to v links to set distance to wall
+// L.20 x Diam.4 mm STANDERS
+// servo screws 2.5 x 15mm
 
-// - increase gondola length?
-// - better weight holder notches
-// - check weight holder sliding height
+
+// Links
+// Wings
+// Check motor return
+// SVG

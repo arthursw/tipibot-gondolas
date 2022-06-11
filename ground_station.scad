@@ -101,16 +101,24 @@ module pen_cap_plate() {
     }
 }
 pen_attachment_margin = 7;
+pen_cap_waffle_diameter = pen_cap_diameter+2*thickness;
+pen_cap_waffle_diameter_margin = 2;
+
+pen_attachement_inner_margin = 0.3;
+
 module pen_with_attachment(two_d=false) {
     if(two_d) {
-        left(35)
-        tube(id=pen_diameter, od=pen_diameter+pen_attachment_margin, h=thickness);
+        left(40)
+        tube(id=pen_diameter-pen_attachement_inner_margin, od=pen_diameter+pen_attachment_margin, h=thickness);
         xrot(90)
         cap_gear();
+        left(75)
+        xcopies(pen_cap_waffle_diameter+2, 2)
+        tube(id=pen_cap_diameter-pen_attachement_inner_margin, od=pen_cap_waffle_diameter, h=thickness);
     } else {
         pen();
-        up(pen_length-5*thickness)
-        tube(id=pen_diameter, od=pen_diameter+pen_attachment_margin, h=thickness);
+        up(pen_length-6.5*thickness)
+        tube(id=pen_diameter-pen_attachement_inner_margin, od=pen_diameter+pen_attachment_margin, h=thickness);
         // pen_attachment();
 
         // pen_cap_plate();
@@ -118,7 +126,13 @@ module pen_with_attachment(two_d=false) {
         // up(penz)
         up(pen_length+2*thickness)
         xrot(90)
-        cap_gear();
+        {   
+            xrot(90)
+            up(-thickness/2)
+            zcopies(2*thickness, 2)
+            tube(id=pen_cap_diameter-pen_attachement_inner_margin, od=pen_cap_waffle_diameter, h=thickness);
+            cap_gear();
+        }
 
         // pen_attachment();
     }
@@ -216,7 +230,7 @@ module case_main() {
 
         // Cap notch
         fwd(case_length/2-landing_length+2*thickness)
-        ycopies(4*thickness, 2)
+        ycopies(6*thickness, 2)
         cuboid([case_width - case_cap_notch_width, 2*thickness, 2*thickness]);
         
         // Motor attachment notch
@@ -297,11 +311,12 @@ module bulldozer(top=true, small=false) {
     }
 }
 // bulldozer();
+planetary_gears_screw_spacing_diameter = 28;
 
-module case_wall(bearings=true, pen_print=false, cap_activator=false) {
+module case_wall(bearings=true, pen_print=false, cap_activator=false, pen_cap_waffle=false) {
     color("blue")
     difference() {
-        case_wall_top = penz + pen_diameter/2 - case_height;
+        case_wall_top = penz + pen_diameter - case_height;
         union() {
             cuboid([case_width, case_height, thickness]);
 
@@ -320,24 +335,42 @@ module case_wall(bearings=true, pen_print=false, cap_activator=false) {
         mirror_copy(LEFT, case_width/2-case_cap_notch_width/4)
         cuboid([case_cap_notch_width/2, 2*thickness, 2*thickness]);
 
+        // Bearings and sliders holes
         if(bearings)
         fwd(case_height/2-nema17z)
         bearing_and_sliders();
 
+        // Nema 17
+        if(bearings && !pen_print && !cap_activator) {
+            fwd(case_height/2-nema17z)
+            nema_mount_holes(size=17, depth=3*thickness, l=0);
+
+            // Planetary gears mount screw holes
+            fwd(case_height/2-nema17z)
+            zrot_copies(n=4, sa=45)
+            left(planetary_gears_screw_spacing_diameter/2)
+            cyl(d=3, h=2*thickness);
+        }
+
         if(pen_print)
         union() {
-
-            pen_min_z = cap_activator ? pen_diameter / 2 : pen_diameter;
+            // Pen notch
+            pen_min_z = cap_activator ? pen_diameter : pen_diameter + pen_diameter/2;
             fwd(-case_height/2-case_wall_top + pen_min_z)
             cyl(d=pen_diameter+pen_bulldozer_margin, h=2*thickness);
             fwd(-case_height/2-case_wall_top+pen_min_z/2)
             cuboid([pen_diameter+pen_bulldozer_margin, pen_min_z, 2*thickness]);
+            
+            // Pen cap Waffle
+            if(pen_cap_waffle)
+            fwd(-case_height/2-case_wall_top + pen_min_z)
+            cyl(d=pen_cap_waffle_diameter+pen_cap_waffle_diameter_margin, h=2*thickness);
 
-            if(bearings)
             // Magnets
-            fwd(-case_height/2-case_wall_top + pen_diameter/2)
-            mirror_copy(LEFT, (pen_diameter+pen_bulldozer_margin)/2+thickness+magnet_size/2)
-            cuboid([magnet_size, magnet_size, magnet_size]);
+            // if(bearings)
+            // fwd(-case_height/2-case_wall_top + pen_diameter)
+            // mirror_copy(LEFT, (pen_diameter+pen_bulldozer_margin)/2+thickness+magnet_size/2)
+            // cuboid([magnet_size, magnet_size, magnet_size]);
         }
 
         // whth = pen_diameter/2;
@@ -348,7 +381,7 @@ module case_wall(bearings=true, pen_print=false, cap_activator=false) {
     }
 }
 
-// case_wall(bearings=true, pen_print=true);
+// case_wall(pen_print=true, cap_activator=true, pen_cap_waffle=true);
 
 // left(100)
 // case_motor_cap();
@@ -384,13 +417,13 @@ module case_side() {
             // prismoid(size1=[2*thickness, axe_length-2*thickness-case_side_chamfer], size2=[2*thickness, axe_length-2*thickness], h=case_side_void_h);
 
             // Cap void
-            fwd(case_length/2)
+            fwd(case_length/2+thickness)
             yrot(90)
             prismoid(size1=[2*thickness, 2*(landing_length-5*thickness)-case_side_chamfer], size2=[2*thickness, 2*(landing_length-5*thickness)], h=case_side_void_h);
         }
         // Cap notches
         fwd(case_length/2-landing_length+2*thickness)
-        ycopies(4*thickness, 2)
+        ycopies(6*thickness, 2)
         xcopies(case_height-(case_height - case_cap_notch_width)/2, 2)
         cuboid([(case_height - case_cap_notch_width)/2, 2*thickness, 2*thickness]);
         
@@ -452,7 +485,6 @@ module case_side() {
 module import_case() {
     fwd(-case_length/2+nema17_depth-thickness)
     up(nema17z)
-    xrot(90)
     import_part_gs("gs_nema17_stepper");
 
     up(thickness)
@@ -475,9 +507,9 @@ module import_case() {
     up(case_height/2)
     xrot(90)
     up(2*thickness)
+    mirror_copy(TOP, 3*thickness)
     zcopies(thickness, 2)
-    zcopies(4*thickness, 2)
-    // case_wall($idx==0, pen_print=true, cap_activator=($idx>0));
+    // case_wall(true, pen_print=true, cap_activator=true, pen_cap_waffle=$idx==0);
     import_part_gs($idx==0 ? "gs_case_wall_cap" : "gs_case_wall_end");
 
     // Sides
@@ -498,9 +530,24 @@ remaining_length = axe_length - t8_lead_big_length - coupler_length - 6*thicknes
 
 echo("remaining_length: ", remaining_length);
 
+planetary_gears_diameter = 36;
+planetary_gears_length = 42.7;
+planetary_gears_axe_length = 20;
+planetary_gears_axe_diameter = 6;
+
+module planetary_gears() {
+    xrot(90) {
+        cyl(h=planetary_gears_length, d=planetary_gears_diameter, anchor=BOTTOM);
+        up(planetary_gears_length)
+        cyl(h=planetary_gears_axe_length, d=planetary_gears_axe_diameter, anchor=BOTTOM);
+    }
+}
+
+
 module axe_and_guides(two_d) {
     if(two_d) {
         xrot(90)
+        xcopies(40, 2)
         t8_gear();
     } else {
         // Coupler (axe holder)
@@ -509,7 +556,7 @@ module axe_and_guides(two_d) {
         cyl(d=coupler_diameter, h=coupler_length);
         
         // T8 bearing
-        fwd(case_length/2-landing_length-thickness)
+        fwd(case_length/2-landing_length-2*thickness)
         xrot(90)
         tube(od=t8_bearing_diameter, id=t8_screw_diameter, h=t8_bearing_thickness);
         
@@ -527,7 +574,7 @@ module axe_and_guides(two_d) {
         }
         
         // T8 lead and linear bearings
-        fwd(case_length/2-landing_length-7*thickness)
+        fwd(case_length/2-landing_length-9*thickness)
         xrot(90) {
             // T8 lead
             xrot(180) {
@@ -548,20 +595,20 @@ module axe_and_guides(two_d) {
 
         // T8 gears
         fwd(case_length/2-landing_length+2*thickness)
+        ycopies(thickness, 2)
         t8_gear();
     }
 }
-
+// axe_and_guides();
 pitch = 5;
 helical = 0;
 
-module cap_gear(shaft_diam=pen_cap_diameter, teeth=26, spin=5) {
+module cap_gear(shaft_diam=pen_cap_diameter-pen_attachement_inner_margin, teeth=30, spin=5) {
     difference() {
         spur_gear(pitch=pitch, teeth=teeth, thickness=thickness, helical=helical, shaft_diam=shaft_diam, spin=spin, orient=BACK);
-        
-        yrot_copies(n=14)
-        mirror_copy(LEFT, (pen_diameter+pen_bulldozer_margin)/2+thickness+magnet_size/2)
-        cuboid([magnet_size, magnet_size, magnet_size]);
+        // yrot_copies(n=14)
+        // mirror_copy(LEFT, (pen_diameter+pen_bulldozer_margin)/2+thickness+magnet_size/2)
+        // cuboid([magnet_size, magnet_size, magnet_size]);
     }
 }
 
@@ -606,7 +653,7 @@ module import_ground_station() {
 
     import_case();
 
-    fwd(case_length/2-landing_length-4*thickness)
+    fwd(case_length/2-landing_length-6*thickness)
     up(nema17z-bulldozer_body_height/2+t8_lead_big_diameter/2)
     xrot(90) {
         zcopies(thickness, 2)
@@ -643,16 +690,20 @@ module export_part(part=part, two_d=false) {
         case_wall();
     }
     if(part == "gs_case_wall_cap") {
-        case_wall(true, pen_print=true, cap_activator=false);
+        case_wall(true, pen_print=true, cap_activator=true, pen_cap_waffle=true);
     }
     if(part == "gs_case_wall_end") {
-        case_wall(true, pen_print=true, cap_activator=true);
+        case_wall(true, pen_print=true, cap_activator=true, pen_cap_waffle=false);
     }
     if(part == "gs_case_side") {
         case_side();
     }
     if(part == "gs_nema17_stepper" && !two_d) {
-        nema17_stepper();
+        fwd(-planetary_gears_length) {
+            planetary_gears();
+            xrot(90)
+            nema17_stepper();
+        }
     }
     if(part == "gs_bulldozer") {
         bulldozer();
@@ -707,3 +758,5 @@ if(command_gs == "" && !gs_imported_from_gondolami) {
     import_ground_station();
 }
 // pen_holder(two_d=true);
+
+// pen_with_attachment(two_d=true);

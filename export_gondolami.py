@@ -26,7 +26,7 @@ parser = argparse.ArgumentParser(description='Export Gondolami.', formatter_clas
 parser.add_argument('-t', '--type', type=str, help='Export type', default='3d', choices=['3d', '2d'])
 parser.add_argument('-p', '--parts', help='Parts (default exports all parts).', default=[], nargs='+', choices=all_parts)
 parser.add_argument('-m', '--models', help='(Optional) Shortcut to export all parts of the given models.', default=[], nargs='+', choices=all_models)
-parser.add_argument('-kw', '--kerf_widths', help='Kerf widths', default=[0.1, 0.2], nargs='+', type=float)
+parser.add_argument('-kw', '--kerf_widths', help='Kerf widths', default=[0.0, 0.1], nargs='+', type=float)
 parser.add_argument('-gl', '--gondola_lengths', help='Gondola length', default=[120], nargs='+', type=float)
 args = parser.parse_args()
 

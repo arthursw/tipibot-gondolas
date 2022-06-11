@@ -28,7 +28,7 @@ $fs=1;
 
 // => 95 sides
 
-thickness = 4;
+thickness = 3;
 
 // bead chain specs:
 bead_spacing = 12;

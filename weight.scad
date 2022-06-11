@@ -31,7 +31,7 @@ $fs=1;
 
 gondola_length = 120;
 
-thickness = 4;
+thickness = 3;
 
 m3_diameter = 3;
 m3_radius = 3/2;
@@ -161,6 +161,7 @@ module weight_holder() {
     weight_holder_side();
 }
 
+
 module weight_holder_v2() {
     zrot(180)
     mirror_copy(FRONT, weight_neck_radius) // 3*thickness/2+thickness)
@@ -168,13 +169,18 @@ module weight_holder_v2() {
     weight_holder_side_v2();
 }
 
-module top_link() {
+module top_link(length=head_holder_length, hole=false) {
+    
     difference() {
-        cuboid([weight_holder_width, head_holder_length, thickness], anchor=BOTTOM);
+        cuboid([weight_holder_width, length, thickness], anchor=BOTTOM);
         
         left(weight_holder_width/4)
-        mirror_copy(FRONT, head_holder_length/2-thickness/2-thickness)
+        mirror_copy(FRONT, length/2-thickness/2-thickness)
         cuboid([weight_holder_width/2, thickness, 2*thickness], anchor=BOTTOM);
+
+        if(hole) {
+            cyl(r=m3_radius, l=2*thickness);
+        }
     }
 }
 
@@ -187,6 +193,10 @@ module link_v2() {
         cuboid([weight_holder_width/2, thickness, 2*thickness], anchor=BOTTOM);
     }
 }
+
+// module end_stop_waffle() {
+//     tube(ir=,or=washer_radius, l=thickness);
+// }
 
 module viz3d_v1() {
     down(weight_holder_height/2+weight_body_height/2-2*thickness- weight_holder_top_margin/2 + weight_holder_bottom_margin/2) {
@@ -229,6 +239,95 @@ module viz3d_v2() {
     link_v2();
 }
 
+
+
+// =================== BEGIN CAP =================== //
+
+pulley_thickness = 3 * thickness;
+cap_margin = 1;
+weight_holder_width_cap = pulley_thickness + 2 * cap_margin;
+weight_holder_z_margin_cap = 4 * thickness;
+weight_holder_height_cap = 2 * pulley_outer_radius + 2 * weight_holder_z_margin_cap;
+
+module weight_holder_side_cap() {
+    offset_y = 0;
+    difference() {
+        fwd(offset_y)
+        cuboid([weight_holder_width, weight_holder_height_cap, thickness], anchor=BOTTOM);
+
+        fwd(offset_y)
+        left(weight_holder_width/4)
+        mirror_copy(FRONT, weight_holder_height_cap/2-thickness/2-thickness)
+        cuboid([weight_holder_width/2, thickness, 2*thickness], anchor=BOTTOM);
+
+        cyl(r=m3_radius, l=2*thickness);
+    }
+}
+
+module weight_holder_cap() {
+    zrot(180)
+    mirror_copy(FRONT, weight_holder_width_cap/2)
+    xrot(90)
+    weight_holder_side_cap();
+}
+
+module top_link_cap(length=head_holder_length, hole=false) {
+    down(thickness/2)
+    difference() {
+        cuboid([weight_holder_width, length, thickness], anchor=BOTTOM);
+        
+        left(weight_holder_width/4)
+        mirror_copy(FRONT, length/2-thickness/2-thickness)
+        cuboid([weight_holder_width/2, thickness, 2*thickness], anchor=BOTTOM);
+
+        if(hole) {
+            cyl(r=m3_radius, l=2*thickness);
+        }
+    }
+}
+
+module top_cap(hole=false) {
+    difference() {
+        cuboid([weight_holder_width, weight_holder_width_cap, thickness]);
+        if(hole) {
+            cyl(r=m3_radius, l=2*thickness);
+        }
+    }
+}
+
+module viz3d_cap() {
+  
+    xrot(90) {
+        fake_pulley();
+    }
+    weight_holder_cap();
+
+    zcopies(weight_holder_height_cap-3*thickness, 2) {
+        top_link_cap(length=weight_holder_width_cap+4*thickness, hole=$idx==0);
+        down($idx==0 ? thickness: -thickness)
+        top_cap(hole=$idx==0);
+    }
+}
+
+// viz3d_cap();
+
+
+module export_2d_cap() {
+    
+    xcopies(weight_holder_width+1, 2){
+        weight_holder_side_cap();
+        fwd(weight_holder_height_cap/2+weight_holder_width_cap+1)
+        top_link_cap(length=weight_holder_width_cap+4*thickness, hole=$idx==0);
+        fwd(weight_holder_height_cap/2+2*weight_holder_width_cap+pulley_thickness)
+        top_cap(hole=$idx==0);
+    }
+}
+
+export_2d_cap();
+
+// =================== END CAP =================== //
+
+
 module export_2d_v1() {
     head_holder();
 
@@ -254,6 +353,9 @@ module export_part_2d_no_render() {
     if(part == "weight_v2") {
         export_2d_v2();
     }
+    if(part == "weight_cap") {
+        export_2d_cap();
+    }
 }
 
 kerf_width = 0.2;
@@ -269,12 +371,18 @@ module export_part_2d() {
         }
     }
 }
+
+// viz3d_v1();
+
 module export_part(part=part) {
     if(part == "weight_v1") {
         viz3d_v1();
     }
     if(part == "weight_v2") {
         viz3d_v2();
+    }
+    if(part == "weight_cap") {
+        viz3d_cap();
     }
 }
 
@@ -297,7 +405,7 @@ module import_part(name) {
 }
 
 if(command == "") {
-    import_part("weight_v2");
+    // import_part("weight_v2");
 }
 
 // export_2d_v1();

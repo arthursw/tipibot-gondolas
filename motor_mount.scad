@@ -109,11 +109,27 @@ module body(finger_hole=false) {
 
 // body();
 
+end_stop_width = 27;
+end_stop_height = 17;
+end_stop_screw_x_spacing = 19;
+end_stop_screw_y = 13;
+m3_radius = 3/2;
+
 module nema_holder() {
     difference() {
         
         // Main plate
-        cuboid([width, height, thickness], anchor=BOTTOM);
+        union() {
+            cuboid([width, height, thickness], anchor=BOTTOM);
+            // End stop holder
+            fwd(height/2+end_stop_height/2)
+            difference() {
+                cuboid([width, end_stop_height, thickness], anchor=BOTTOM);
+                fwd(-end_stop_height/2+end_stop_screw_y)
+                xcopies(end_stop_screw_x_spacing, 2)
+                cyl(r=m3_radius, h=2*thickness);
+            }
+        }
 
         // Sides notches
         fwd(body_cap_y+side_hook_length)
@@ -129,8 +145,8 @@ module nema_holder() {
             // mirror_copy(FRONT, nema_screw_dist/2)
             // #cyl(r=nema_screw_diameter/2, l=2*thickness);
             
-            fwd(nema_hole_y/2+1)
-            cuboid([nema_notch, nema_hole_y, 2*thickness], anchor=BOTTOM);
+            fwd(nema_hole_y/2+end_stop_height/2+1)
+            cuboid([nema_notch, nema_hole_y+end_stop_height, 2*thickness], anchor=BOTTOM);
         }
 
         // Chain holes
