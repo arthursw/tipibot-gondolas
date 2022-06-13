@@ -23,6 +23,8 @@ module gondola_ring() {
     tube(id=pen_diameter+pen_margin, od=gondola_inner_diameter, l=thickness);
 }
 
+// gondola_ring();
+
 servo_width = 40;
 servo_height = 40;
 
@@ -53,15 +55,23 @@ module servo_arm() {
     }
 }
 
-servo_arm();
+// servo_arm();
 
 module export_part() {
+
 }
+
 part = "";
 
 module export_part_2d_no_render() {
-    if(part == "p_nema") {
-        // pulley_2D();
+    if(part == "gmarker_ring") {
+        gondola_ring();
+    }
+    if(part == "gmarker_servo_holder") {
+        gondola_servo_holder();
+    }
+    if(part == "gmarker_servo_arm") {
+        servo_arm();
     }
 }
 
@@ -93,5 +103,7 @@ module export_command() {
 export_command();
 
 if(command == "") {
-    // pulley();
+    gondola_ring();
+    gondola_servo_holder();
+    servo_arm();
 }

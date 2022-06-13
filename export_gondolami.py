@@ -12,10 +12,12 @@ models = {
 'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder', 'cap', 'pulley', 'wheel', 'bearing_wheel', 'marble'],
     # 'gondolami': ['main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'double_caster', 'wing', 'vlink_with_comb', 'servo_case', 'body', 'point88_ensemble', 'cap_holder', 'cap'],
     'pulley': ['p_nema', 'p_weight', 'p_waffle'],
-    'weight': ['weight_v1', 'weight_v2'],
+    'weight': ['weight_v1', 'weight_v2', 'weight_cap', 'fancy_weight_cap2', 'fancy_weight_cap4'],
     'motor_mount': ['mm_body', 'mm_nema_holder', 'mm_body_cap', 'mm_side', 'mm_sensor_holder'],
-    'ground_station': ['gs_case_main', 'gs_case_wall_motor', 'gs_case_wall_cap', 'gs_case_wall_end', 'gs_case_side', 'gs_nema17_stepper', 'gs_bulldozer', 'gs_bulldozer_spacer', 'gs_pen_with_attachment', 'gs_axe_and_guides', 'gs_pen_holder', 'gs_pen_cap_plate']
+    'ground_station': ['gs_case_main', 'gs_case_wall_motor', 'gs_case_wall_cap', 'gs_case_wall_end', 'gs_case_side', 'gs_nema17_stepper', 'gs_bulldozer', 'gs_bulldozer_spacer', 'gs_pen_with_attachment', 'gs_axe_and_guides', 'gs_pen_holder', 'gs_pen_cap_plate'],
+    'gondola_marker': ['gmarker_ring', 'gmarker_servo_holder', 'gmarker_servo_arm'],
 }
+
 
 all_models = list(models.keys())
 all_parts = [models[m] for m in all_models]
@@ -26,7 +28,7 @@ parser = argparse.ArgumentParser(description='Export Gondolami.', formatter_clas
 parser.add_argument('-t', '--type', type=str, help='Export type', default='3d', choices=['3d', '2d'])
 parser.add_argument('-p', '--parts', help='Parts (default exports all parts).', default=[], nargs='+', choices=all_parts)
 parser.add_argument('-m', '--models', help='(Optional) Shortcut to export all parts of the given models.', default=[], nargs='+', choices=all_models)
-parser.add_argument('-kw', '--kerf_widths', help='Kerf widths', default=[0.0, 0.1], nargs='+', type=float)
+parser.add_argument('-kw', '--kerf_widths', help='Kerf widths', default=[0.0], nargs='+', type=float)
 parser.add_argument('-gl', '--gondola_lengths', help='Gondola length', default=[120], nargs='+', type=float)
 args = parser.parse_args()
 

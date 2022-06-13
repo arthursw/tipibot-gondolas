@@ -323,9 +323,141 @@ module export_2d_cap() {
     }
 }
 
-export_2d_cap();
+// export_2d_cap();
 
 // =================== END CAP =================== //
+
+// =================== BEGIN FANCY WEIGHTS =================== //
+
+fancy_weight_diameter = 39;
+fancy_weight_outer_diameter = fancy_weight_diameter + 4 * thickness;
+fancy_weight_height = 45;
+n_weights = 2;
+
+fancy_weight_total_height = n_weights * fancy_weight_height + 6 * thickness;
+// n_links = 4;
+module fancy_weight() {
+    cyl(r=fancy_weight_diameter/2, l=fancy_weight_height);
+}
+
+module fancy_weight_ring(n_links=2, zrot=90) {
+    difference() {
+        tube(id=fancy_weight_diameter, od=fancy_weight_outer_diameter, l=thickness);
+        // notches
+        zrot(zrot)
+        zrot_copies(n=n_links)
+        fwd(fancy_weight_outer_diameter/2-thickness/2)
+        cuboid([thickness, thickness, 2*thickness]);
+    }
+}
+
+module fancy_weight_top_ring(center_notches=false, n_links=2, zrot=90) {
+    difference() {
+        cyl(r=fancy_weight_outer_diameter/2, h=thickness);
+        // notches
+        zrot(zrot)
+        zrot_copies(n=n_links)
+        fwd(fancy_weight_outer_diameter/2-thickness/2)
+        cuboid([thickness, thickness, 2*thickness]);
+
+        if(center_notches) {
+            left(fancy_weight_outer_diameter/4)
+            mirror_copy(FRONT, weight_holder_width_cap/2)
+            cuboid([fancy_weight_outer_diameter/2, thickness, 2*thickness]);
+        }
+    }
+}
+
+// fancy_weight_top_ring(true);
+
+module fancy_weight_link(rings=false) {
+    difference() {
+        cuboid([fancy_weight_total_height, 2*thickness, thickness]);
+        // rings
+        if(rings) {
+            fwd(thickness/2)
+            xcopies(fancy_weight_total_height/n_weights, n_weights)
+            xcopies(fancy_weight_height-7*thickness, 2)
+            cuboid([thickness, thickness, 2*thickness]);
+        }
+        
+        // top / bottom rings
+        fwd(thickness/2)
+        xcopies(fancy_weight_total_height-3*thickness, 2)
+        cuboid([thickness, thickness, 2*thickness]);
+    }
+}
+
+module viz3d_fancy_weight(n_links=4, rings=false, zrot=90) {
+  
+    xrot(90) {
+        fake_pulley();
+    }
+    weight_holder_cap();
+    
+    up(weight_holder_height_cap/2-thickness-thickness/2)
+    top_link_cap(length=weight_holder_width_cap+4*thickness, hole=false);
+    up(weight_holder_height_cap/2-thickness/2)
+    top_cap(hole=false);
+
+    down(weight_holder_height_cap/2-thickness-thickness/2)
+    fancy_weight_top_ring(true, n_links);
+
+    zrot(zrot)
+    zrot_copies(n=n_links)
+    back(fancy_weight_diameter/2+thickness)
+    down(weight_holder_height_cap/2-3*thickness+fancy_weight_total_height/2)
+    yrot(zrot)
+    fancy_weight_link(rings);
+
+    down(weight_holder_height_cap/2+fancy_weight_height)
+    zcopies(n_weights*fancy_weight_height/2, n_weights)
+    fancy_weight();
+    
+    if(rings) {
+        down(weight_holder_height_cap/2+fancy_weight_height+thickness/2)
+        zcopies(fancy_weight_total_height/n_weights, n_weights)
+        zcopies(fancy_weight_height-7*thickness, 2)
+        fancy_weight_ring(n_links);
+    }
+
+    down(weight_holder_height_cap/2+fancy_weight_total_height-4.5*thickness)
+    fancy_weight_top_ring(false, n_links);
+}
+
+
+module export_2d_fancy_weight(n_links=2, rings=false) {
+    fwd(weight_holder_height_cap/2+weight_holder_width_cap+10)
+    top_link_cap(length=weight_holder_width_cap+4*thickness, hole=false);
+    fwd(weight_holder_height_cap/2+2*weight_holder_width_cap+pulley_thickness+20)
+    top_cap(hole=false);
+    xcopies(weight_holder_width+1, 2){
+        weight_holder_side_cap();
+    }
+    fwd(-weight_holder_height_cap/2-fancy_weight_outer_diameter/2-10)
+    xcopies(fancy_weight_outer_diameter, 2)
+    fancy_weight_top_ring($idx==0, n_links);
+
+    fwd(-weight_holder_height_cap/2-fancy_weight_outer_diameter-2*n_links*thickness-10)
+    ycopies(2*thickness+1, n_links)
+    fancy_weight_link(rings);
+    
+    if(rings) {
+        left(3*fancy_weight_outer_diameter/2+10)
+        ycopies(fancy_weight_outer_diameter+1, n_links)
+        fancy_weight_ring(n_links);
+    }
+}
+
+// export_2d_fancy_weight(4, false);
+// export_2d_fancy_weight(2, true);
+// viz3d_fancy_weight(2, true);
+// viz3d_fancy_weight(4, false);
+
+// fancy_weight_link();
+// fancy_weight();
+
+// =================== END FANCY WEIGHTS =================== //
 
 
 module export_2d_v1() {
@@ -356,8 +488,13 @@ module export_part_2d_no_render() {
     if(part == "weight_cap") {
         export_2d_cap();
     }
+    if(part == "fancy_weight_cap4") {
+        export_2d_fancy_weight(4, false);
+    }
+    if(part == "fancy_weight_cap2") {
+        export_2d_fancy_weight(2, true);
+    }
 }
-
 kerf_width = 0.2;
 
 module export_part_2d() {
@@ -383,6 +520,12 @@ module export_part(part=part) {
     }
     if(part == "weight_cap") {
         viz3d_cap();
+    }
+    if(part == "fancy_weight_cap4") {
+        viz3d_fancy_weight(4, false);
+    }
+    if(part == "fancy_weight_cap2") {
+        viz3d_fancy_weight(2, true);
     }
 }
 
@@ -413,3 +556,8 @@ if(command == "") {
 // top_link();
 // viz3d_v1();
 // viz3d_v2();
+
+// - Anneaux gondola ok
+// - Servo holder gondola ok
+// - Weight holder gondola ok
+// - Motor mounts heads ok
