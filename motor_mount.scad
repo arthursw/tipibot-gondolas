@@ -110,9 +110,9 @@ module body(finger_hole=false) {
 // body();
 
 end_stop_width = 27;
-end_stop_height = 17;
+end_stop_height = 21;
 end_stop_screw_x_spacing = 19;
-end_stop_screw_y = 13;
+end_stop_screw_y = 17;
 m3_radius = 3/2;
 
 module nema_holder() {
@@ -303,6 +303,9 @@ module export_part() {
     if(part == "mm_sensor_holder") {
         sensor_holder();
     }
+    if(part == "mm_all") {
+        viz3d();
+    }
 }
 
 // part = "mm_side";
@@ -358,3 +361,4 @@ if(command == "") {
     viz3d();
 }
 
+// TODO: cross holes in the wall board to be able to measure from motor center

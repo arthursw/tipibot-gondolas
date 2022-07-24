@@ -309,7 +309,7 @@ module viz3d_cap() {
     }
 }
 
-// viz3d_cap();
+viz3d_cap();
 
 
 module export_2d_cap() {
@@ -444,7 +444,7 @@ module export_2d_fancy_weight(n_links=2, rings=false) {
     
     if(rings) {
         left(3*fancy_weight_outer_diameter/2+10)
-        ycopies(fancy_weight_outer_diameter+1, n_links)
+        ycopies(fancy_weight_outer_diameter+1, n_weights*2)
         fancy_weight_ring(n_links);
     }
 }

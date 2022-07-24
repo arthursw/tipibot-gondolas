@@ -27,7 +27,7 @@ nema17_width = nema_motor_width(17);
 case_width = nema17_width + 4*thickness;
 
 // Pen holder
-pen_case_margin = 2;
+pen_case_margin = 2; //50;
 pen_holder_legs_spacing = 30;
 magnet_spacing = 10;
 magnet_size = 3;
@@ -36,12 +36,23 @@ n_magnets = 4;
 pen_holder_length = body_length - magnet_blocker_length - blocker_margin;
 pen_holder_width = 40;
 pen_holder_bottom_margin = 5;
-pen_holder_case_margin = 1;
+pen_holder_case_margin = 3;
 pen_holder_bottom_width = case_width + 2 * pen_holder_case_margin + 2 * pen_holder_bottom_margin;
-case_to_pen_center = pen_diameter + pen_case_margin + 3;
-pen_holder_bottom_height = ground_to_pen_center - case_to_pen_center + pen_holder_bottom_margin + pen_diameter / 2 + pen_holder_case_margin;
+case_to_pen_center = pen_diameter / 2 + pen_case_margin + 3;
+pen_holder_bottom_height = ground_to_pen_center - case_to_pen_center + pen_holder_bottom_margin + pen_holder_case_margin;
 pen_holder_bottom_hole_width = case_width + 2 * pen_holder_case_margin;
-pen_holder_bottom_hole_height = ground_to_pen_center - case_to_pen_center + pen_diameter / 2 + pen_holder_case_margin;
+pen_holder_bottom_hole_height = ground_to_pen_center - case_to_pen_center + pen_holder_case_margin;
 pen_holder_height = ground_to_pen_center + body_z;
 
+sliding_magnet_width = 15;
+comb_notch = 2 * thickness;
+
 command_gs = "";
+
+marble_nut = 10;
+m3_diameter = 3;
+m3_radius = 3/2;
+m3_nut_height = 2.4;
+m3_nut_S = 5.5;
+m3_nut_e = 6.01;
+m3_screw_head_diameter = 5.5;

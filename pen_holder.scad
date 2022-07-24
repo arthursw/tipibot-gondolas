@@ -1,3 +1,10 @@
+include <BOSL2/constants.scad>
+include <BOSL2/shapes.scad>
+include <BOSL2/screws.scad>
+include <BOSL2/std.scad>
+include <BOSL2/joiners.scad>
+include <BOSL2/gears.scad>
+
 include <parameters.scad>
 
 
@@ -11,6 +18,10 @@ module pen_holder_bridge(pen_diameter = pen_diameter, pen_nsides=0) {
             // Bottom body
             fwd(pen_holder_height/2-pen_holder_bottom_height/2)
             cuboid([pen_holder_bottom_width, pen_holder_bottom_height, thickness]);
+            
+            // Bottom legs
+            fwd(pen_holder_height/2+pen_holder_bottom_hole_height/2)
+            cuboid([pen_holder_bottom_width, pen_holder_bottom_hole_height, thickness]);
         }
         // #fwd(pen_holder_height/2)
         // xrot(-90)
@@ -23,6 +34,10 @@ module pen_holder_bridge(pen_diameter = pen_diameter, pen_nsides=0) {
         // Case hole
         translate([0, -pen_holder_height/2+pen_holder_bottom_hole_height/2, 0])
         cuboid([pen_holder_bottom_hole_width, pen_holder_bottom_hole_height, 2*thickness]);
+        
+        // Bottom leg hole
+        translate([0, -pen_holder_height/2-pen_holder_bottom_hole_height/2, 0])
+        cuboid([pen_holder_bottom_hole_width, pen_holder_bottom_hole_height, 2*thickness]);
 
         // Pen hole
         translate([0, -pen_holder_height/2+ground_to_pen_center, 0])
@@ -34,8 +49,8 @@ module pen_holder_bridge(pen_diameter = pen_diameter, pen_nsides=0) {
 
         // Side notches
         translate([0, -pen_holder_height/2+ground_to_pen_center, 0])
-        mirror_copy(LEFT, pen_holder_width/2-thickness/2)
-        cuboid([thickness, comb_notch, 2*thickness]);
+        mirror_copy(LEFT, pen_holder_width/2-comb_notch/2)
+        #cuboid([comb_notch, thickness, 2*thickness]);
     }
 }
 
@@ -68,6 +83,7 @@ module pen_holder(pen_diameter=pen_diameter, pen_nsides=0, two_d=false) {
         pen_holder_bridge();
     }
 }
+// pen_holder();
 
 module comb(length=pen_holder_length, notch=comb_notch, width = -1) {
     width = width < 0 ? 2 * notch : width;
@@ -92,18 +108,19 @@ module pen_holder_2d(pen_diameter=pen_diameter, pen_nsides=0) {
 
     // translate([pen_holder_width+1+2*comb_notch+1, -ground_to_pen_center + pen_holder_length/2, 0])
     // translate([-23, body_z+comb_notch+9, 0])
-    fwd(40)
+    fwd(70)
     zrot(90)
     mirror_copy(LEFT, comb_notch+1)
     comb();
     // pen_holder_comb_wheel_2d();
 
     // translate([pen_holder_bottom_width+1+sliding_magnet_width+thickness, -ground_to_pen_center + pen_holder_length/2, -thickness/2])
-    fwd(15)
+    fwd(45)
     zrot(90)
     sliding_magnet(pen_holder_length, sliding_magnet_width, n_magnets, notches=true);
 }
 
+// pen_holder_2d();
 
 module point88() {
     //   Stabilo point 88
@@ -146,3 +163,58 @@ module pencil() {
 // }
 
 // // pencil_holder();
+
+pen_ring_thickness = 3*thickness;
+pen_ring_width = pen_diameter+2*pen_ring_thickness;
+pen_ring_bottom_height = pen_ring_thickness; //m3_nut_height + 2*thickness;
+pen_ring_height = pen_ring_bottom_height+pen_diameter+pen_ring_thickness;
+
+module pen_ring(screw_hole=true) {
+    difference() {
+        fwd(pen_ring_height/2-pen_ring_bottom_height-pen_diameter/2)
+        cuboid([pen_ring_width, pen_ring_height, thickness]);
+
+        // Screw hole
+        if(screw_hole) {
+            fwd(-pen_diameter/2-pen_ring_bottom_height/2)
+            cuboid([thickness, pen_ring_bottom_height+thickness, 2*thickness]);
+        }
+
+        // Pen hole
+        cyl(d=pen_diameter+0.2, h=2*thickness);
+
+        // Screw notch
+        fwd(-pen_diameter/2-pen_ring_bottom_height/2)
+        cuboid([m3_nut_S, m3_nut_height, 2*thickness]);
+
+        // Bottom notch
+        left(pen_ring_width/2-thickness)
+        fwd(-pen_diameter/2-pen_ring_bottom_height/2+thickness/2)
+        ycopies(thickness,2)
+        #cuboid([2*thickness, thickness, 2*thickness]);
+    }
+}
+// pen_ring();
+
+module pen_ring_ortho_bottom() {
+    difference() {
+        cuboid([pen_ring_width, 4*thickness+m3_nut_S, thickness]);
+        zrot(30)
+        cyl(d=m3_nut_e, h=2*thickness, $fn=6);
+        width = pen_ring_width - 2*thickness;
+        right(pen_ring_width/2-width/2)
+        cuboid([width, thickness, 2*thickness]);
+    }
+}
+
+// fwd(-28)
+// pen_ring_ortho_bottom();
+
+module pen_ring_bottom() {
+    difference() {
+        cuboid([pen_ring_width, pen_ring_bottom_height, thickness]);
+        cuboid([m3_nut_S, m3_nut_height, 2*thickness]);
+    }
+}
+// fwd(-45)
+// pen_ring_bottom();

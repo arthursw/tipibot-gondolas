@@ -48,12 +48,6 @@ holder_height = 50;
 
 wheel_diameter = 13; // 20;
 
-marble_nut = 10;
-m3_diameter = 3;
-m3_radius = 3/2;
-m3_nut_height = 2.4;
-m3_nut_S = 5.5;
-m3_screw_head_diameter = 5.5;
 
 arc_notch = 14;
 
@@ -71,7 +65,7 @@ pen_position = pen_back_position;
 
 flask_height = 120;
 flask_diameter = 24;
-weight_diameter = 22;
+weight_diameter = 28;
 
 link_length = gondola_length - 4 * thickness;
 side_comb_pos = link_length / 2 - 8 * thickness;
@@ -104,7 +98,7 @@ squeezer_holder_height = 55;
 squeezer_holder_y = -25;
 
 servo_case_width = 62;
-servo_case_length = 40;
+servo_case_length = 60;
 
 gondola_is_on_floor = true;
 
@@ -249,7 +243,15 @@ module main_arc_2d(od=gondola_outer_diameter, arc_width=arc_width, width=gondola
     // }
 }
 // main_arc_2d();
-
+module marble_holder() {
+    difference() {
+        cuboid([arc_width, arc_width-2*thickness, thickness]);
+        marble_nut = 10;
+        marble_nut_radius = hexagon_h_to_r(marble_nut/2);
+        cyl(r=marble_nut_radius, l=2*thickness, $fn=6);
+    }
+}
+// marble_holder();
 
 link_screw_length = 20;
 
@@ -813,7 +815,115 @@ module double_caster_wing_2d() {
 
 // double_caster_wing_2d();
 
+// body_case_height = 2*thickness + 1 + thickness + servoTD8130MG_head_height + servoTD8130MG_ears_to_top + thickness;
+
+servoTD8130MG_height = 39;
+servoTD8130MG_length = 40;
+servoTD8130MG_length_with_ears = 54;
+servoTD8130MG_thickness = 20.2;
+
+servoTD8130MG_bottom_to_ears = 28; // ears is the bottom of the holding plate: more or less the red / black limit
+servoTD8130MG_ears_height = 2.5;
+servoTD8130MG_ears_height_with_screw = 3;
+servoTD8130MG_ears_height_with_joints = 5;
+servoTD8130MG_ears_joints_diameter = 6;
+servoTD8130MG_ears_spacing_y = 10;
+servoTD8130MG_ears_spacing_x = 49;
+servoTD8130MG_ears_to_top = servoTD8130MG_height-servoTD8130MG_bottom_to_ears;
+servoTD8130MG_black_cyl_height = 2.5;
+servoTD8130MG_black_cyl_diameter = 16;
+servoTD8130MG_head_height = 4; // head is the metal cylinder
+servoTD8130MG_head_diameter = 6;
+servoTD8130MG_head_offset = 34-servoTD8130MG_length/2-servoTD8130MG_head_diameter/2;
+servoTD8130MG_head_height_with_screw = 8;
+servoTD8130MG_screw_holes_radius = 0.75;
+servoTD8130MG_height_with_gear = 48;
+
+module servoTD8130MG() {
+
+    screw_holder_ear = 6;
+    
+    // Main body
+    cuboid([servoTD8130MG_length, servoTD8130MG_thickness, servoTD8130MG_height], anchor=BOTTOM);
+
+    // Ears
+    up(servoTD8130MG_bottom_to_ears)
+    cuboid([servoTD8130MG_length_with_ears, servoTD8130MG_thickness, servoTD8130MG_ears_height], anchor=BOTTOM);
+    
+    // Joints
+    up(servoTD8130MG_bottom_to_ears+servoTD8130MG_ears_height/2)
+    mirror_copy(FRONT, servoTD8130MG_ears_spacing_y/2)
+    mirror_copy(LEFT, servoTD8130MG_ears_spacing_x/2)
+    cyl(l=servoTD8130MG_ears_height_with_joints, r=servoTD8130MG_ears_joints_diameter/2);
+    
+    // Triangles
+    up(servoTD8130MG_bottom_to_ears+servoTD8130MG_ears_height)
+    mirror_copy(LEFT, servoTD8130MG_length/2)
+    cuboid([6, 2, 3], anchor=BOTTOM);
+
+    left(servoTD8130MG_head_offset) {
+        up(servoTD8130MG_height)
+        cyl(h=servoTD8130MG_black_cyl_height, r=servoTD8130MG_black_cyl_diameter/2, anchor=BOTTOM);
+
+        up(servoTD8130MG_height+servoTD8130MG_black_cyl_height)
+        cyl(h=servoTD8130MG_head_height, r=servoTD8130MG_head_diameter/2, anchor=BOTTOM);
+    }
+}
+// left(100)
+// servoTD8130MG();
+
+module servoTD8130MG_print() {
+    cuboid([servoTD8130MG_length+0.5, servoTD8130MG_thickness+0.5, 2*thickness]);
+
+    // Screw holes
+    mirror_copy(FRONT, servoTD8130MG_ears_spacing_y/2)
+    mirror_copy(LEFT, servoTD8130MG_ears_spacing_x/2)
+    cyl(l=2*thickness, r=servoTD8130MG_screw_holes_radius);
+
+    // Triangles holes
+    mirror_copy(LEFT, servoTD8130MG_length/2)
+    cuboid([6, 2.1, 2*thickness]);
+}
+
+
+// servoTD8130MG_print();
+
+gear_to_slider_margin = 1;
+// body_case_height = 0.5 * thickness + servoTD8130MG_ears_to_top + servoTD8130MG_head_height + gear_to_slider_margin + thickness + 0.5 * thickness;
+body_case_height = 2*thickness + gear_to_slider_margin + servoTD8130MG_height_with_gear - (servoTD8130MG_bottom_to_ears+servoTD8130MG_ears_height_with_screw);
+counter_slider_height = body_case_height - 4*thickness;
+
+// cyl(l=2*thickness, r=m3_nut_S/2, $fn=6);
+
+body_notch_spacing = (body_length-4*thickness) / 2;
+body_notch_length = 20;
+
 module vlink(length=link_length, arc_width=arc_width) {
+
+    color( rands(0,1,3), alpha=1 )
+    union() {
+            // Long link
+            long_link2(length, arc_width=arc_width);
+
+            // Board & notches
+            board_height = gondola_height-arc_width-body_z+thickness;
+            right(arc_width/2 + board_height/2)
+            difference() {
+                // Board
+                cuboid([board_height, body_length-4*thickness, thickness], anchor=BOTTOM);
+
+                // Notches
+                right(board_height/2-body_case_height/2-thickness)
+                xcopies(body_case_height-thickness, 2)
+                ycopies(body_notch_spacing, 2)
+                cuboid([thickness, body_notch_length, 2*thickness]);
+            }
+    }
+}
+// vlink();
+
+
+module vlink_complex(length=link_length, arc_width=arc_width) {
     
     total_height = vlink_height+arc_width;
 
@@ -844,16 +954,19 @@ module vlink(length=link_length, arc_width=arc_width) {
         }
     }
 }
+
 // vlink(length=link_length, arc_width=arc_width);
 side_comb_height = thickness*30;
 side_comb_notch = 2*thickness; //notch/2;
 side_comb_width = 2*side_comb_notch;
 
+
+
 module vlink_with_comb(length=link_length, arc_width=arc_width) {
     vlink();
 
     down(thickness)
-    left(-arc_width/2-vlink_height-side_comb_height/2+12*thickness)
+    left(-arc_width/2-vlink_height-side_comb_height/2+12*thickness-thickness/2)
     mirror_copy(FRONT, side_comb_pos)
     xrot(-90)
     zrot(90)
@@ -890,8 +1003,6 @@ module vlink_with_comb_2d(length=link_length, arc_width=arc_width) {
 // }
 
 // comb(squeezer_length, notch, 30);
-
-sliding_magnet_width = 10;
 
 // module pen_holder_bridge(width=pen_holder_width, height=holder_height, length=170, prism_width=50, prism_height=30, prism_base=0, comb_notch_z=3*thickness, center_notch=sliding_magnet_width, side_notches=-1, leg_height=10, elastic_notch_x=-1, elastic_notch_size=-1, clamp_comb_notch=-1) {
 //     elastic_notch_size = elastic_notch_size < 0 ? 3 : elastic_notch_size;
@@ -936,7 +1047,6 @@ sliding_magnet_width = 10;
 // }
 // pen_holder_bridge(side_notches=8, clamp_comb_notch=4);
 
-comb_notch = 2 * thickness;
 pen_holder_legs_spacing = 12 * thickness;
 
 // pen_diameter = 12; // 11 but 12 for margins
@@ -1138,6 +1248,7 @@ module servo9g() {
     }
 }
 
+
 module servo_holder_dovetail(dx, dy, dz, dt_width, dt_spacing, n) {
 
     diff("remove")
@@ -1162,7 +1273,7 @@ module servo_case_side(dx, dy, dz, dt_width, dt_spacing, n) {
     }
 }
 
-rack_n_teeth = 10;
+rack_n_teeth = 16;
 gear_n_teeth = 16;
 pitch = 5;
 rack_length = rack_n_teeth * pitch;
@@ -1175,22 +1286,43 @@ module servo_gears(position=0, two_d=false) {
     rack_x = position+pitch;
     pr = pitch_radius(pitch=pitch, teeth=gear_n_teeth); // 12.7324
     down(pr) {
+        fwd(-1)
         right(rack_x)
         rack(pitch=pitch, teeth=rack_n_teeth, thickness=thickness, height=rack_height, helical=helical);
 
         // up(pr) yrot(180.0-$t*360/gear_n_teeth)
         // up(5)
-        up(two_d ? pr + 2 : pr) yrot(-180 * rack_x / pr / PI)
-        difference() {
-            spur_gear(pitch=pitch, teeth=gear_n_teeth, thickness=thickness, helical=helical, shaft_diam=6.8, orient=BACK);
-            // right(5)
-            yrot(90)
-            prismoid([6,3], [4,3], h=8);
-            // cuboid([6, 5, 2*thickness]);
+        up(two_d ? pr + 2 : pr) yrot(-180 * rack_x / pr / PI) {
+            difference() {
+                spur_gear(pitch=pitch, teeth=gear_n_teeth, thickness=thickness, helical=helical, shaft_diam=6.8, orient=BACK);
+                // right(5)
+                xrot(90)
+                cyl(h=2*thickness, d=20.2);
+                // yrot(90)
+                // prismoid([6,3], [4,3], h=8);
+                // cuboid([6, 5, 2*thickness]);
+            }
+            right(30)
+            fwd(two_d ? 0 : thickness)
+            difference() {
+                spur_gear(pitch=pitch, teeth=gear_n_teeth, thickness=thickness, helical=helical, shaft_diam=6.8, orient=BACK);
+                xrot(90)
+                cyl(h=2*thickness, d=9);
+            }
         }
+
     }
 
 }
+
+module servoTD8130MG_with_gears() {
+    servoTD8130MG();
+    left(servoTD8130MG_head_offset)
+    up(servoTD8130MG_height_with_gear-thickness/2)
+    xrot(90)
+    servo_gears();
+}
+// servoTD8130MG_with_gears();
 
 // arc_length = angle*r;
 // angle = arc_length / r;
@@ -1241,15 +1373,46 @@ module servo_holder() {
 
 // servo_holder();
 
-module servo_case_raw() {
-    
+// up(30)
+// servoTD8130MG_print();
+
+module servoTD8130MG_holder() {
+
+    difference() {
+
+        // Create servo holder board with dovetails
+        servo_holder_dovetail(servo_holder_length, servo_case_width, thickness, servo_dovetail_width, servo_dovetail_spacing, servo_n_dovetails);
+        
+        // Remove servoTD8130MG print
+        fwd(servo_y_offset) {
+            servoTD8130MG_print();
+        }
+
+        // Holes for colson
+        fwd(servo_y_offset) {
+            mirror_copy(FRONT, (servoTD8130MG_width+8)/2)
+            cyl(l=2*thickness, r=2);
+        }
+    };
+}
+
+
+// servoTD8130MG_holder();
+
+module servo_case_raw(servoTD8130MG=false) {
+
+    up(servoTD8130MG ? -servoTD8130MG_height+servo_holder_y+(servoTD8130MG_height-servoTD8130MG_bottom_to_ears)-2.5: 0)
     fwd(servo_y_offset) {
-        servo9g();
+        if(servoTD8130MG) {
+            servoTD8130MG();
+        } else {
+            servo9g();
+        }
 
         // Gear
 
         // left(22.5/2-11.8/2)
-        up(26.7+2.6)
+        up(servoTD8130MG ? servoTD8130MG_height : 26.7+2.6)
         xrot(90)
         servo_gears(-pen_position);
     }
@@ -1257,7 +1420,12 @@ module servo_case_raw() {
     // Servo holder
     color( rands(0,1,3), alpha=1 )
     up(servo_holder_y)
-    servo_holder();
+    if(servoTD8130MG){
+        servoTD8130MG_holder();
+    } else {
+        servo_holder();
+    }
+    
 
     // Case sides
     up(servo_holder_y+thickness) {
@@ -1272,7 +1440,7 @@ module servo_case_raw() {
     
 }
 
-// servo_case_raw();
+// servo_case_raw(true);
 
 module servo_case_raw_2d() {
     
@@ -1567,6 +1735,163 @@ module main_body_plate() {
 }
 // up(body_z)
 // main_body_plate();
+body_board_length = body_length+6*thickness;
+module body_board() {
+    // Body board
+    cuboid([body_width-2*thickness, body_board_length, thickness]);
+    // Ears
+    xcopies(body_width-thickness, 2)
+    ycopies(body_notch_spacing, 2)
+    cuboid([thickness, body_notch_length, thickness]);
+}
+
+module body_board_bottom() {
+    difference() {
+        body_board();
+        // Slider hole
+        cuboid([slider_spacing, body_board_length-2*body_sliders_link, 2*thickness]);
+        // Screw holes for bumper
+        n_screws = 5;
+        screw_spacing = 6;
+        mirror_copy(LEFT, body_width/2-2*thickness-thickness/2)
+        back(body_board_length/2-screw_spacing*(n_screws-1)/2-3*thickness/2)
+        ycopies(screw_spacing, n_screws)
+        cyl(h=2*thickness, d=m3_diameter);
+        // Counter-slider 2 Notches
+        right(sliding_magnet_top_width/2+thickness/2)
+        ycopies(body_notch_spacing, 2)
+        cuboid([thickness, body_notch_length, thickness]);
+    }
+}
+
+bumper_length = 3*thickness;
+
+module bumper() {
+    difference() {
+        cuboid([body_width-2*thickness, bumper_length, thickness], anchor=BOTTOM);
+        mirror_copy(LEFT, body_width/2-2*thickness-thickness/2)
+        cyl(h=2*thickness, d=m3_diameter);
+        fwd(body_sliders_link/2)
+        cuboid([slider_spacing, bumper_length-body_sliders_link, 2*thickness], anchor=BOTTOM);
+    }
+}
+
+
+// down(20)
+// body_board_bottom();
+
+// main_body_plate();
+// body_board();
+servo_left_offset = servo_y_offset;
+counter_slider_left_offset = 4+thickness;
+
+module body_board_servo() {
+    difference() {
+        body_board();
+        // Servo print
+        left(servo_left_offset) {
+            zrot(90)
+            servoTD8130MG_print();
+        }
+        // Counter-slider Notches
+        right(counter_slider_left_offset)
+        ycopies(body_notch_spacing, 2)
+        cuboid([thickness, body_notch_length, thickness]);
+        // Counter-slider 2 Notches
+        right(sliding_magnet_top_width/2+thickness/2)
+        ycopies(body_notch_spacing, 2)
+        cuboid([thickness, body_notch_length, thickness]);
+    }
+}
+
+// body_board_servo();
+
+module counter_slider() {
+    // Main
+    cuboid([counter_slider_height, body_length, thickness]);
+    // Notches
+    left(counter_slider_height/2+thickness/2)
+    ycopies(body_notch_spacing, 2)
+    cuboid([thickness, body_notch_length, thickness]);
+}
+
+// counter_slider();
+
+// sliding_magnet_top_width
+
+counter_slider2_height = body_case_height-2*thickness;
+
+module counter_slider2() {
+    
+    cuboid([counter_slider2_height, body_length, thickness]);
+    // Notches
+    mirror_copy(LEFT, counter_slider2_height/2+thickness/2)
+    ycopies(body_notch_spacing, 2)
+    cuboid([thickness, body_notch_length, thickness]);
+}
+// counter_slider2();
+
+module body_assembly() {
+    up(body_z) {
+        up(thickness/2)
+        body_board_bottom();
+        
+        up(body_case_height-counter_slider_height/2-thickness)
+        right(counter_slider_left_offset)
+        yrot(90)
+        counter_slider();
+
+        up(body_case_height/2)
+        right(sliding_magnet_top_width/2+thickness/2)
+        yrot(90)
+        counter_slider2();
+
+        up(servoTD8130MG_bottom_to_ears+servoTD8130MG_ears_height_with_screw+body_case_height)
+        left(servo_left_offset)
+        xrot(180)
+        zrot(-90)
+        servoTD8130MG_with_gears();
+
+        up(body_case_height-thickness/2)
+        body_board_servo();
+    }
+    
+    back(body_board_length/2-bumper_length/2)
+    up(body_z-thickness)
+    bumper();
+    
+    up(body_z)
+    sliding_magnet_assembly();
+    
+    // mirror_copy(LEFT, gondola_width/2-thickness/2)
+    // left(thickness/2)
+    // yrot(90)
+    // left(gondola_height-arc_width/2)
+    // vlink();
+    
+}
+
+module body_assembly_2d() {
+    right(body_width/2+body_width/2+1)
+    body_board_servo();
+    body_board_bottom();
+    left(body_width/2+counter_slider_height/2+1)
+    counter_slider();
+    left(body_width/2+counter_slider_height+1+2*thickness+counter_slider2_height/2+1)
+    counter_slider2();
+    fwd(body_length/2+bumper_length+10)
+    bumper();
+    fwd(body_length/2+bumper_length+10+50)
+    xrot(90)
+    servo_gears(two_d=true);
+
+    right(body_width+body_width+1+sliding_magnet_plate_width)
+    sliding_magnet_assembly(two_d=true);
+}
+
+// body_assembly_2d();
+
+// body_assembly();
 
 module cap_slice(hole=true, hole_radius=cap_radius, ears=false) {
     difference() {
@@ -1708,7 +2033,15 @@ module cap_ensemble_2d() {
 }
 
 // cap_ensemble_2d();
+module sliding_magnet_assembly(two_d=false) {
+    sliding_magnet(magnet_spacing*n_magnets, sliding_magnet_plate_width, n_magnets);
+    left(two_d?sliding_magnet_plate_width+sliding_magnet_plate_width/2:0)
+    up(two_d?0:thickness)
+    sliding_magnet(sliding_magnet_length, sliding_magnet_top_width, n_magnets);
+}
 
+
+// sliding_magnet_assembly();
 // main_body_plate();
 module body(servo=true) {
 
@@ -1720,11 +2053,8 @@ module body(servo=true) {
 
     // Sliding magnet
     fwd(pen_position)
-    union() {
-        sliding_magnet(sliding_magnet_length, sliding_magnet_plate_width, n_magnets);
-        up(thickness)
-        sliding_magnet(sliding_magnet_length, sliding_magnet_top_width, n_magnets);
-    }
+    sliding_magnet_assembly();
+    
 
     down(thickness)
     back(body_length/2-magnet_blocker_length/2)
@@ -1832,7 +2162,8 @@ module structure_3d(arcs=true, hlinks=true, vlinks=true, flasks=false, top_marbl
         mirror_copy(LEFT, gondola_width/2)
         up(gondola_height-arc_width/2)
         yrot(90)
-        vlink_with_comb();
+        // vlink_with_comb();
+        vlink();
     }
 
     if(flasks) {
@@ -2679,6 +3010,9 @@ module export_part(part=part) {
     if(part == "vlink_with_comb") {
         vlink_with_comb();
     }
+    if(part == "vlink") {
+        vlink();
+    }
     if(part == "pencil_holder") {
         pencil_holder();
     }
@@ -2708,6 +3042,9 @@ module export_part(part=part) {
     }
     if(part == "marble") {
         marble();
+    }
+    if(part == "body_assembly") {
+        body_assembly();
     }
 }
 
@@ -2756,7 +3093,13 @@ module wing_2d() {
 module two_vlink_with_comb_2d() {
     mirror_copy(LEFT, side_comb_height/2+1)
     vlink_with_comb_2d();
-}    
+}
+
+module two_vlink_2d() {
+    mirror_copy(RIGHT, arc_width/2+1)
+    vlink();
+}
+// two_vlink_2d();
 
 // part = "body";
 module export_part_2d_no_render() {
@@ -2790,6 +3133,9 @@ module export_part_2d_no_render() {
     if(part == "vlink_with_comb") {
         two_vlink_with_comb_2d();
     }
+    if(part == "vlink") {
+        two_vlink_2d();
+    }
     if(part == "pencil_holder") {
         pencil_holder_2d();
     }
@@ -2798,6 +3144,9 @@ module export_part_2d_no_render() {
     }
     if(part == "body") {
         body_2d(false);
+    }
+    if(part == "body_assembly") {
+        body_assembly_2d();
     }
     if(part == "point88_ensemble") {
         point88_ensemble_2d();
@@ -2826,6 +3175,9 @@ module export_part_2d_no_render() {
     }
     if(part == "kerf_test") {
         kerf_test();
+    }
+    if(part == "marble_holder") {
+        marble_holder();
     }
 }
 // export_part_2d_no_render();
@@ -2930,6 +3282,13 @@ module import_pencil_holder() {
     import_part("pencil_holder");
 }
 
+module import_vlink() {
+    mirror_copy(LEFT, gondola_width/2)
+    up(gondola_height-arc_width/2)
+    yrot(90)
+    import_part("vlink");
+}
+
 module import_vlink_with_comb() {
     mirror_copy(LEFT, gondola_width/2)
     up(gondola_height-arc_width/2)
@@ -3005,14 +3364,19 @@ module import_cap_ensemble() {
     // }
 }
 
+module import_body_assembly() {
+    import_part("body_assembly");
+}
+
 module import_gondolami() {
     import_main_arc1();
     import_main_arc2();
 	import_hlink_ensemble();
 	import_double_caster_wing();
-    import_vlink_with_comb();
-    import_servo_case();
-    import_body();
+    import_vlink();
+    import_body_assembly();
+    // import_servo_case();
+    // import_body();
     // import_point88_ensemble();
     // import_cap_ensemble();
 
@@ -3039,7 +3403,7 @@ module import_gondolami() {
 // - cap : less wide
 
 if(command == "") {
-
+    
     import_gondolami();
     
     // export_part("hlink");

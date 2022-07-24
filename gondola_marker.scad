@@ -46,12 +46,16 @@ module gondola_servo_holder() {
 }
 
 // gondola_servo_holder();
-servo_arm_length = 30;
+servo_arm_length = 60;
+servo_arm_n_screw_holes = 6;
+servo_arm_screw_spacing = 2*10;
 module servo_arm() {
     difference() {
         cuboid([servo_arm_length, 2*thickness, 2*thickness], anchor=BOTTOM, rounding=thickness, edges=[LEFT+FRONT, LEFT+BACK, RIGHT+FRONT, RIGHT+BACK]);
-        left(servo_arm_length/2-thickness)
-        cyl(r=m3_radius, h=2*thickness, anchor=BOTTOM);
+        
+        left(servo_arm_length/2-thickness/2-servo_arm_screw_spacing/2)
+        xcopies(servo_arm_screw_spacing/servo_arm_n_screw_holes, servo_arm_n_screw_holes)
+        cyl(r=1.5/2, h=2*thickness, anchor=BOTTOM);
     }
 }
 
@@ -103,7 +107,7 @@ module export_command() {
 export_command();
 
 if(command == "") {
-    gondola_ring();
-    gondola_servo_holder();
+    // gondola_ring();
+    // gondola_servo_holder();
     servo_arm();
 }

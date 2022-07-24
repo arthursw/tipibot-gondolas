@@ -8,13 +8,13 @@ import itertools
 # mm_body mm_nema_holder mm_body_cap mm_side mm_sensor_holder
 
 models = {
-    'gondolami': ['kerf_test', 'tests', 'main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'sliding_vlink', 'sliding_hlink_top', 'sliding_hlink_bottom', 'double_caster', 'wing', 'vlink_with_comb', 
-'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder', 'cap', 'pulley', 'wheel', 'bearing_wheel', 'marble'],
+    'gondolami': ['kerf_test', 'tests', 'main_arc1', 'main_arc2', 'hlink', 'vlink', 'hlink_cap', 'sliding_vlink', 'sliding_hlink_top', 'sliding_hlink_bottom', 'double_caster', 'wing', 'vlink_with_comb', 
+'pencil_holder', 'servo_case', 'body', 'point88_ensemble', 'pen_wedge', 'cap_holder', 'cap', 'pulley', 'wheel', 'bearing_wheel', 'marble', 'body_assembly', 'marble_holder'],
     # 'gondolami': ['main_arc1', 'main_arc2', 'hlink', 'hlink_cap', 'double_caster', 'wing', 'vlink_with_comb', 'servo_case', 'body', 'point88_ensemble', 'cap_holder', 'cap'],
-    'pulley': ['p_nema', 'p_weight', 'p_waffle'],
+    'pulley': ['p_nema', 'p_nema_lower_odd_teeth', 'p_weight', 'p_weight_lower_odd_teeth', 'p_waffle'],
     'weight': ['weight_v1', 'weight_v2', 'weight_cap', 'fancy_weight_cap2', 'fancy_weight_cap4'],
-    'motor_mount': ['mm_body', 'mm_nema_holder', 'mm_body_cap', 'mm_side', 'mm_sensor_holder'],
-    'ground_station': ['gs_case_main', 'gs_case_wall_motor', 'gs_case_wall_cap', 'gs_case_wall_end', 'gs_case_side', 'gs_nema17_stepper', 'gs_bulldozer', 'gs_bulldozer_spacer', 'gs_pen_with_attachment', 'gs_axe_and_guides', 'gs_pen_holder', 'gs_pen_cap_plate'],
+    'motor_mount': ['mm_body', 'mm_nema_holder', 'mm_body_cap', 'mm_side', 'mm_sensor_holder', 'mm_all'],
+    'ground_station': ['gs_case_main', 'gs_case_main_short', 'gs_case_wall_motor', 'gs_case_wall_cap', 'gs_case_wall_end', 'gs_case_side', 'gs_case_side_short', 'gs_nema17_stepper', 'gs_bulldozer', 'gs_bulldozer_spacer', 'gs_pen_with_attachment', 'gs_axe_and_guides', 'gs_pen_holder', 'gs_pen_cap_plate', 'gs_guide_holder', 'gs_pen_ring'],
     'gondola_marker': ['gmarker_ring', 'gmarker_servo_holder', 'gmarker_servo_arm'],
 }
 

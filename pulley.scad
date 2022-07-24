@@ -74,7 +74,7 @@ module waffle_nema17() {
 // waffle_nema17();
 
 // bead();
-module pulley_middle(axe_diameter=-1) {
+module pulley_middle(axe_diameter=-1, lower_odd_teeth=true) {
     difference() {
         cyl(r=pulley_chain_radius, l=thickness);
 
@@ -85,10 +85,12 @@ module pulley_middle(axe_diameter=-1) {
         // Formula taken from https://www.mathopenref.com/polygonsides.html
         side = 2 * pulley_radius * sin(180 / pulley_n_intervals);
 
-        zrot(180/pulley_n_intervals)
-        zrot_copies(n=pulley_n_intervals/2)
-        fwd(pulley_radius)
-        cuboid([side, bead_diameter, 2*thickness]);
+        if(lower_odd_teeth) {
+            zrot(180/pulley_n_intervals)
+            zrot_copies(n=pulley_n_intervals/2)
+            fwd(pulley_radius)
+            cuboid([side, bead_diameter, 2*thickness]);
+        }
 
         nema17_axe(axe_diameter);
     }
@@ -106,16 +108,16 @@ module pulley_side(axe_diameter=-1) {
     }
 }
 // pulley_middle();
-module pulley(axe_diameter=-1) {
-    pulley_middle(axe_diameter);
+module pulley(axe_diameter=-1, lower_odd_teeth=true) {
+    pulley_middle(axe_diameter, lower_odd_teeth);
     mirror_copy(TOP, thickness)
     pulley_side(axe_diameter);
 }
 
 // pulley();
 
-module pulley_2D(axe_diameter=-1) {
-    pulley_middle(axe_diameter);
+module pulley_2D(axe_diameter=-1, lower_odd_teeth=true) {
+    pulley_middle(axe_diameter, lower_odd_teeth);
 
     fwd(2*pulley_radius-8)
     mirror_copy(LEFT, 2*pulley_radius)
@@ -131,10 +133,16 @@ part = "";
 
 module export_part_2d_no_render() {
     if(part == "p_nema") {
-        pulley_2D();
+        pulley_2D(-1, false);
+    }
+    if(part == "p_nema_lower_odd_teeth") {
+        pulley_2D(-1, true);
     }
     if(part == "p_weight") {
-        pulley_2D(3);
+        pulley_2D(3, false);
+    }
+    if(part == "p_weight_lower_odd_teeth") {
+        pulley_2D(3, true);
     }
     if(part == "p_waffle") {
         waffle_nema17();
